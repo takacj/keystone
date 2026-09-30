@@ -54,13 +54,6 @@ struct MainView: View {
                     .help("Reload vaults and refresh secrets (⌘R)")
             }
         }
-        .environment(context)
-        .environment(secrets)
-        .environment(deleted)
-        .environment(detail)
-        .environment(editor)
-        .environment(palette)
-        .environment(requests)
         .focusedSceneValue(\.menuActions, menuActions)
         .overlay { paletteOverlay }
         .overlay(alignment: .bottom) {
@@ -71,7 +64,7 @@ struct MainView: View {
             QuickSwitchSheet(kind: kind, items: switchItems(kind)) { selectSwitch(kind, $0) }
         }
         .sheet(item: Bindable(editor).sheet) { SecretEditorSheet(model: $0) }
-        .overlay(alignment: .bottom) { SecretEditorToast().environment(editor) }
+        .overlay(alignment: .bottom) { SecretEditorToast() }
         .alert(
             "Undo failed",
             isPresented: Binding(get: { editor.undoError != nil }, set: { if !$0 { editor.clearUndoError() } })
@@ -95,6 +88,14 @@ struct MainView: View {
         .task(id: model.selectedAccountID) { switchAccount() }
         .sheet(isPresented: Bindable(model).isAddAccountPresented) { AddAccountSheet() }
         .sheet(isPresented: Bindable(model).isManageAccountsPresented) { ManageAccountsView() }
+        // Keep last: sheets/overlays above are outside the scope of environment modifiers applied before them.
+        .environment(context)
+        .environment(secrets)
+        .environment(deleted)
+        .environment(detail)
+        .environment(editor)
+        .environment(palette)
+        .environment(requests)
     }
 
     private func configureSecrets() {
@@ -201,7 +202,7 @@ struct MainView: View {
         if palette.isPresented {
             ZStack(alignment: .top) {
                 Color.black.opacity(0.15).ignoresSafeArea().onTapGesture { palette.close() }
-                CommandPaletteView().environment(palette).padding(.top, 80)
+                CommandPaletteView().padding(.top, 80)
             }
         }
     }

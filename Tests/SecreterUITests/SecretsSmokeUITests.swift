@@ -15,7 +15,7 @@ final class SecretsSmokeUITests: XCTestCase {
         app.launchArguments = ["-UITestMode", "-ApplePersistenceIgnoreState", "YES"]
         app.launch()
         app.activate()
-        if !app.windows.firstMatch.waitForExistence(timeout: 5) { app.typeKey("n", modifierFlags: .command) }
+        if !app.windows.firstMatch.waitForExistence(timeout: 5) { app.typeKey("n", modifierFlags: [.command, .shift]) }
 
         // Pick a vault.
         let vault = app.staticTexts["kv-dev"].firstMatch
@@ -65,7 +65,7 @@ final class SecretsSmokeUITests: XCTestCase {
         app.launchArguments = ["-UITestMode", "-ApplePersistenceIgnoreState", "YES"]
         app.launch()
         app.activate()
-        if !app.windows.firstMatch.waitForExistence(timeout: 5) { app.typeKey("n", modifierFlags: .command) }
+        if !app.windows.firstMatch.waitForExistence(timeout: 5) { app.typeKey("n", modifierFlags: [.command, .shift]) }
 
         let vault = app.staticTexts["kv-dev"].firstMatch
         XCTAssertTrue(vault.waitForExistence(timeout: timeout), "vault not listed")
@@ -89,5 +89,37 @@ final class SecretsSmokeUITests: XCTestCase {
         let value = app.staticTexts["version.value"]
         XCTAssertTrue(value.waitForExistence(timeout: timeout))
         XCTAssertEqual(value.value as? String, "s3cr3t-db-password-v0")
+    }
+
+    /// Editor sheet opens for edit (⌘E) and create (⌘N) without crashing (regression: sheet was outside the
+    /// scope of MainView's environment objects).
+    @MainActor
+    func testEditorSheetOpens() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-UITestMode", "-ApplePersistenceIgnoreState", "YES"]
+        app.launch()
+        app.activate()
+        if !app.windows.firstMatch.waitForExistence(timeout: 5) { app.typeKey("n", modifierFlags: [.command, .shift]) }
+
+        let vault = app.staticTexts["kv-dev"].firstMatch
+        XCTAssertTrue(vault.waitForExistence(timeout: timeout), "vault not listed")
+        vault.click()
+        let row = app.staticTexts["db-password"]
+        XCTAssertTrue(row.waitForExistence(timeout: timeout), "rows not loaded")
+        row.click()
+        XCTAssertTrue(app.buttons["secret.reveal"].waitForExistence(timeout: timeout), "detail not loaded")
+
+        app.typeKey("e", modifierFlags: .command)
+        let save = app.buttons["Save"].firstMatch
+        XCTAssertTrue(save.waitForExistence(timeout: timeout), "edit sheet did not open")
+        app.buttons["Cancel"].firstMatch.click()
+        XCTAssertTrue(save.waitForNonExistence(timeout: timeout), "edit sheet did not close")
+
+        app.typeKey("n", modifierFlags: .command)
+        let create = app.buttons["Create"].firstMatch
+        XCTAssertTrue(create.waitForExistence(timeout: timeout), "create sheet did not open")
+        app.buttons["Cancel"].firstMatch.click()
+        XCTAssertTrue(create.waitForNonExistence(timeout: timeout), "create sheet did not close")
+        XCTAssertEqual(app.state, .runningForeground, "app crashed")
     }
 }
