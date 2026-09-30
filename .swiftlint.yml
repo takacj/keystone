@@ -1,0 +1,38 @@
+included:
+  - App
+  - Features
+  - SecreterKit/Sources
+  - SecreterKit/Tests
+  - Tests
+excluded:
+  - .build
+  - SecreterKit/.build
+line_length:
+  warning: 160
+  error: 240
+  ignores_urls: true
+  ignores_comments: true
+  ignores_interpolated_strings: true
+identifier_name:
+  min_length: 1
+  excluded: [id, ok, op]
+nesting:
+  type_level: 3
+cyclomatic_complexity:
+  warning: 25
+function_body_length:
+  warning: 80
+large_tuple:
+  warning: 3
+type_name:
+  excluded: [IT]
+disabled_rules:
+  - todo
+  # conflicts with swift-format (which adds trailing commas in multiline collections)
+  - trailing_comma
+  # conflicts with swift-format's brace placement after multiline declarations
+  - opening_brace
+  - closure_parameter_position
+  - void_function_in_ternary
+  # lossy String(decoding:) is intentional for CLI output
+  - optional_data_string_conversion

@@ -1,0 +1,85 @@
+name: Secreter
+options:
+  bundleIdPrefix: com.jtakac
+  deploymentTarget:
+    macOS: "26.0"
+  createIntermediateGroups: true
+packages:
+  SecreterKit:
+    path: SecreterKit
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    MACOSX_DEPLOYMENT_TARGET: "26.0"
+    CODE_SIGN_STYLE: Automatic
+    CODE_SIGN_IDENTITY: "-"
+    DEVELOPMENT_TEAM: ""
+targets:
+  Secreter:
+    type: application
+    platform: macOS
+    sources: [App, Features, Resources]
+    dependencies:
+      - package: SecreterKit
+        product: AzureCLI
+      - package: SecreterKit
+        product: AzureAuth
+      - package: SecreterKit
+        product: AzureCore
+      - package: SecreterKit
+        product: AzureARM
+      - package: SecreterKit
+        product: KeyVaultSecrets
+      - package: SecreterKit
+        product: Search
+      - package: SecreterKit
+        product: Persistence
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.jtakac.secreter
+        PRODUCT_NAME: Secreter
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Secreter
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.developer-tools
+        INFOPLIST_KEY_NSHumanReadableCopyright: ""
+        ENABLE_APP_SANDBOX: NO
+        ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_ENTITLEMENTS: Resources/Secreter.entitlements
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+  SecreterTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources: [Tests/SecreterTests]
+    dependencies:
+      - target: Secreter
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.jtakac.secreter.tests
+  SecreterUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources: [Tests/SecreterUITests]
+    dependencies:
+      - target: Secreter
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.jtakac.secreter.uitests
+        TEST_TARGET_NAME: Secreter
+schemes:
+  Secreter:
+    build:
+      targets:
+        Secreter: all
+    test:
+      targets: [SecreterTests]
+  SecreterUI:
+    build:
+      targets:
+        Secreter: all
+    test:
+      targets: [SecreterUITests]

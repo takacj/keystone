@@ -1,0 +1,13 @@
+# Tests-only relaxations (merged with the root config)
+identifier_name:
+  min_length: 1
+  max_length: 60
+# swift-format emits trailing commas; fixtures are long inline JSON; tests use fake tuples/casts
+line_length:
+  warning: 250
+  error: 300
+disabled_rules:
+  - trailing_comma
+  - large_tuple
+  - force_cast
+  - force_try
