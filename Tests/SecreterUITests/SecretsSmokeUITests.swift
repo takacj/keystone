@@ -57,4 +57,37 @@ final class SecretsSmokeUITests: XCTestCase {
         XCTAssertTrue(
             app.staticTexts["api-key"].firstMatch.waitForExistence(timeout: timeout), "palette did not open api-key")
     }
+
+    /// Version history: clicking an older version loads its own value (regression: row id was sent as version).
+    @MainActor
+    func testOlderVersionValueLoads() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-UITestMode", "-ApplePersistenceIgnoreState", "YES"]
+        app.launch()
+        app.activate()
+        if !app.windows.firstMatch.waitForExistence(timeout: 5) { app.typeKey("n", modifierFlags: .command) }
+
+        let vault = app.staticTexts["kv-dev"].firstMatch
+        XCTAssertTrue(vault.waitForExistence(timeout: timeout), "vault not listed")
+        vault.click()
+        let row = app.staticTexts["db-password"]
+        XCTAssertTrue(row.waitForExistence(timeout: timeout), "rows not loaded")
+        row.click()
+        XCTAssertTrue(app.buttons["secret.reveal"].waitForExistence(timeout: timeout), "detail not loaded")
+
+        app.typeKey("y", modifierFlags: .command)
+        let older = app.staticTexts["v0"].firstMatch
+        XCTAssertTrue(older.waitForExistence(timeout: timeout), "versions not listed")
+        older.click()
+        let reveal = app.buttons["version.reveal"]
+        XCTAssertTrue(reveal.waitForExistence(timeout: timeout))
+        let enabled = NSPredicate(format: "isEnabled == true")
+        expectation(for: enabled, evaluatedWith: reveal)
+        waitForExpectations(timeout: timeout)
+        XCTAssertFalse(app.staticTexts["version.error"].exists, "older version failed to load")
+        reveal.click()
+        let value = app.staticTexts["version.value"]
+        XCTAssertTrue(value.waitForExistence(timeout: timeout))
+        XCTAssertEqual(value.value as? String, "s3cr3t-db-password-v0")
+    }
 }

@@ -147,6 +147,21 @@ struct MockAzureTransport: HTTPTransport {
             bundle["value"] = UITestSupport.secretValuePrefix + parts[1]
             bundle["id"] = "\(base)/secrets/\(parts[1])/v1"
             return bundle
+        case 3 where parts[0] == "secrets" && parts[2] == "versions":
+            // v1 = current, v0 = one day older.
+            return [
+                "value": [("v1", stamp), ("v0", stamp - 86_400)].map { version, created in
+                    [
+                        "id": "\(base)/secrets/\(parts[1])/\(version)",
+                        "attributes": ["enabled": true, "created": created, "updated": created],
+                    ] as [String: Any]
+                }
+            ]
+        case 3 where parts[0] == "secrets":
+            var bundle = item(parts[1])
+            bundle["value"] = UITestSupport.secretValuePrefix + parts[1] + (parts[2] == "v1" ? "" : "-" + parts[2])
+            bundle["id"] = "\(base)/secrets/\(parts[1])/\(parts[2])"
+            return bundle
         default:
             return ["value": []]
         }

@@ -59,11 +59,15 @@ struct VersionHistorySheet: View {
     }
 
     private var list: some View {
+        // Selection uses the row's id (full secret URL); map it to the version before fetching.
         List(
             model.versions,
             selection: Binding(
-                get: { model.selectedVersion },
-                set: { v in if let v { Task { await model.select(v) } } })
+                get: { model.selectedItem?.id },
+                set: { id in
+                    guard let version = model.versions.first(where: { $0.id == id })?.version else { return }
+                    Task { await model.select(version) }
+                })
         ) { item in
             VStack(alignment: .leading, spacing: 2) {
                 HStack {
@@ -78,7 +82,6 @@ struct VersionHistorySheet: View {
                     Text("Expires \(dateText(exp))").font(.caption).foregroundStyle(.secondary)
                 }
             }
-            .tag(item.version)
         }
     }
 
@@ -94,6 +97,7 @@ struct VersionHistorySheet: View {
                         model.isRevealed ? "Hide" : "Reveal", systemImage: model.isRevealed ? "eye.slash" : "eye"
                     ) { model.toggleReveal() }
                     .labelStyle(.iconOnly)
+                    .accessibilityIdentifier("version.reveal")
                     .disabled(model.selectedBundle?.value == nil)
                 }
                 Group {
@@ -101,6 +105,7 @@ struct VersionHistorySheet: View {
                         ProgressView()
                     } else if model.isRevealed {
                         Text(model.displayValue).font(.system(.body, design: .monospaced)).textSelection(.enabled)
+                            .accessibilityIdentifier("version.value")
                     } else {
                         Text(String(repeating: "•", count: 12)).font(.system(.body, design: .monospaced))
                             .foregroundStyle(.secondary).accessibilityLabel("Value hidden")
@@ -114,6 +119,7 @@ struct VersionHistorySheet: View {
                 }
                 if let error = model.error {
                     Text(error.localizedDescription).font(.callout).foregroundStyle(.red)
+                        .accessibilityIdentifier("version.error")
                 }
                 Spacer()
                 HStack {

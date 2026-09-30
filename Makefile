@@ -1,4 +1,4 @@
-.PHONY: project build test test-kit test-app test-ui test-integration lint format clean
+.PHONY: project build test test-kit test-app test-ui test-integration dmg lint format clean
 
 DEST = platform=macOS
 SWIFT_DIRS = App Features Tests SecreterKit/Sources SecreterKit/Tests
@@ -30,6 +30,22 @@ test-integration: project
 	TEST_RUNNER_SECRETER_IT_VAULT_RBAC='$(SECRETER_IT_VAULT_RBAC)' \
 	TEST_RUNNER_SECRETER_IT_VAULT_POLICY='$(SECRETER_IT_VAULT_POLICY)' \
 	xcodebuild -project Secreter.xcodeproj -scheme Secreter -destination '$(DEST)' test -only-testing:SecreterTests/IntegrationTests
+
+# Release build packaged as a drag-to-Applications DMG (ad-hoc signed, not notarized).
+# On another Mac, Gatekeeper blocks the first launch: System Settings → Privacy & Security → Open Anyway.
+VERSION = $(shell sed -n 's/^ *MARKETING_VERSION: *//p' project.yml)
+DMG = build/Secreter-$(VERSION).dmg
+
+dmg: project
+	xcodebuild -project Secreter.xcodeproj -scheme Secreter -configuration Release \
+		-destination '$(DEST)' -derivedDataPath build/DerivedData build
+	rm -rf build/dmg $(DMG)
+	mkdir -p build/dmg
+	cp -R build/DerivedData/Build/Products/Release/Secreter.app build/dmg/
+	ln -s /Applications build/dmg/Applications
+	hdiutil create -volname "Secreter $(VERSION)" -srcfolder build/dmg -fs HFS+ -format UDZO -ov $(DMG)
+	rm -rf build/dmg
+	@echo "Created $(DMG)"
 
 lint:
 	swiftlint lint --strict

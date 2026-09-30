@@ -9,6 +9,13 @@ macOS Azure Key Vault secrets manager.
   Separate from `make test` because it needs a GUI session and Accessibility permission.
   Launch the app manually with `-UITestMode` (and optionally `-UITestSecretCount N`) to see the mock environment.
 
+## Install (DMG)
+- `make dmg` → `build/Secreter-<version>.dmg` (Release, universal, ad-hoc signed, not notarized). Version: `MARKETING_VERSION` in `project.yml`.
+- Open the DMG, drag **Secreter** to **Applications**.
+- Other Macs: Gatekeeper blocks first launch → System Settings → Privacy & Security → **Open Anyway**
+  (or `xattr -dr com.apple.quarantine /Applications/Secreter.app`).
+- Requires macOS 26 and Azure CLI (`brew install azure-cli`).
+
 ## Integration tests (opt-in)
 Skipped unless configured. Needs a logged-in `az` profile and two test vaults (one RBAC, one access policy):
 

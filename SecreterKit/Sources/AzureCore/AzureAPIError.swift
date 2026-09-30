@@ -31,6 +31,28 @@ public enum AzureAPIError: Error, Sendable, Equatable {
     }
 }
 
+extension AzureAPIError: LocalizedError {
+    /// Readable fallback for views that show `localizedDescription` (instead of "AzureAPIError error N").
+    public var errorDescription: String? {
+        switch self {
+        case .unauthorized(let body): Self.describe("Not authorized (401). Sign in again.", body)
+        case .forbidden(let body): Self.describe("Access denied (403).", body)
+        case .notFound(let body): Self.describe("Not found (404).", body)
+        case .conflict(let body): Self.describe("Conflict (409).", body)
+        case .throttled(_, let body): Self.describe("Azure is throttling requests (429). Try again shortly.", body)
+        case .http(let status, let body): Self.describe("Request failed (HTTP \(status)).", body)
+        case .network(let code): "Network error (\(code.rawValue)). Check connectivity, firewall or private endpoint."
+        case .decoding(let what): "Unexpected response from Azure (\(what))."
+        case .invalidURL(let url): "Invalid request URL (\(url))."
+        }
+    }
+
+    private static func describe(_ summary: String, _ body: AzureErrorBody?) -> String {
+        guard let message = body?.message, !message.isEmpty else { return summary }
+        return "\(summary) \(message)"
+    }
+}
+
 /// Azure's standard `{"error":{"code","message"}}` payload.
 public struct AzureErrorBody: Sendable, Equatable, Decodable {
     public let code: String?
