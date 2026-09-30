@@ -57,10 +57,23 @@ extension AzureAPIError: LocalizedError {
 public struct AzureErrorBody: Sendable, Equatable, Decodable {
     public let code: String?
     public let message: String?
+    /// `error.innererror.code`, e.g. Key Vault's `ForbiddenByFirewall` under a generic `Forbidden`.
+    public let innerCode: String?
 
-    public init(code: String?, message: String?) {
+    public init(code: String?, message: String?, innerCode: String? = nil) {
         self.code = code
         self.message = message
+        self.innerCode = innerCode
+    }
+
+    private enum CodingKeys: String, CodingKey { case code, message, innererror }
+    private struct Inner: Decodable { let code: String? }
+
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        code = try c.decodeIfPresent(String.self, forKey: .code)
+        message = try c.decodeIfPresent(String.self, forKey: .message)
+        innerCode = try c.decodeIfPresent(Inner.self, forKey: .innererror)?.code
     }
 
     private struct Envelope: Decodable { let error: AzureErrorBody }

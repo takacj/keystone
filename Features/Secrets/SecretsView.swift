@@ -30,6 +30,7 @@ struct SecretsView: View {
                     SecretChips()
                     Divider()
                     content(vault)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                     Divider()
                     footer
                 }

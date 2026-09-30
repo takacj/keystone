@@ -28,6 +28,27 @@ struct ErrorPresentationTests {
         #expect(!p.actions.contains(.copyRoleName("Key Vault Secrets User")))
     }
 
+    @Test func firewallForbiddenIsNotReportedAsPermission() {
+        let body = AzureErrorBody(
+            code: "Forbidden",
+            message: "Client address is not authorized and caller was ignored because bypass is set to None\n"
+                + "Client address: 203.0.113.7\nCaller: appid=04b07795",
+            innerCode: "ForbiddenByFirewall")
+        let p = ErrorPresentation.make(AzureAPIError.forbidden(body), vault: vault(rbac: false))
+        #expect(p.title == "Blocked by vault firewall")
+        #expect(p.message.contains("203.0.113.7"))
+        #expect(!p.message.contains("access polic"))
+        #expect(p.vaultHealth == .unreachable)
+    }
+
+    @Test func firewallDetectedFromMessageAlone() {
+        let body = AzureErrorBody(
+            code: "Forbidden", message: "Client address is not authorized. Client address: 10.0.0.1.")
+        #expect(ErrorPresentation.isFirewallBlock(body))
+        #expect(ErrorPresentation.clientAddress(in: body.message) == "10.0.0.1")
+        #expect(!ErrorPresentation.isFirewallBlock(AzureErrorBody(code: "Forbidden", message: "no access")))
+    }
+
     @Test func forbiddenUnknownVaultMentionsBoth() {
         let p = ErrorPresentation.make(AzureAPIError.forbidden(nil))
         #expect(p.message.contains("Key Vault Secrets User") && p.message.contains("access policy"))

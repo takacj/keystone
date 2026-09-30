@@ -95,7 +95,35 @@ struct ErrorPresentation: Equatable {
         }
     }
 
+    /// Key Vault answers 403 both for missing permissions and for requests rejected by its network rules.
+    static func isFirewallBlock(_ body: AzureErrorBody?) -> Bool {
+        let codes: Set<String> = ["ForbiddenByFirewall", "ForbiddenByConnection"]
+        if let inner = body?.innerCode, codes.contains(inner) { return true }
+        if let code = body?.code, codes.contains(code) { return true }
+        return body?.message?.contains("Client address is not authorized") == true
+    }
+
+    /// The caller IP Key Vault reports in firewall rejections ("Client address: 1.2.3.4").
+    static func clientAddress(in message: String?) -> String? {
+        guard let message, let range = message.range(of: "Client address: ") else { return nil }
+        let ip = message[range.upperBound...].prefix { $0.isHexDigit || $0 == "." || $0 == ":" }
+        let trimmed = ip.trimmingCharacters(in: CharacterSet(charactersIn: ".:"))
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
+    private static func firewall(_ body: AzureErrorBody?, vault: Vault?) -> ErrorPresentation {
+        let name = vault.map { " of \($0.name)" } ?? ""
+        let ip = clientAddress(in: body?.message).map { " (\($0))" } ?? ""
+        return ErrorPresentation(
+            title: "Blocked by vault firewall",
+            message: "Your IP address\(ip) isn't allowed by the network rules\(name). Connect via VPN or an "
+                + "allowed network, or add your IP under Networking in the Azure portal.",
+            detail: body?.message, symbol: "network.badge.shield.half.filled",
+            actions: [.openPortal, .retry], vaultHealth: .unreachable)
+    }
+
     private static func forbidden(_ body: AzureErrorBody?, vault: Vault?) -> ErrorPresentation {
+        if isFirewallBlock(body) { return firewall(body, vault: vault) }
         var result = ErrorPresentation(
             title: "No permission", message: "", detail: body?.message, symbol: "lock",
             actions: [.retry], vaultHealth: .accessDenied)

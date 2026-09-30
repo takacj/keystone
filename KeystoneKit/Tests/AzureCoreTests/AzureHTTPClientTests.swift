@@ -211,3 +211,9 @@ func mapsStatusErrors(status: Int, expected: AzureAPIError) async {
     }
     #expect(seen.map(\.id) == [1])
 }
+
+@Test func errorBodyParsesInnerErrorCode() {
+    let data = Data(#"{"error":{"code":"Forbidden","message":"m","innererror":{"code":"ForbiddenByFirewall"}}}"#.utf8)
+    #expect(
+        AzureErrorBody.parse(data) == AzureErrorBody(code: "Forbidden", message: "m", innerCode: "ForbiddenByFirewall"))
+}
