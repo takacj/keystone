@@ -34,6 +34,17 @@ struct MainView: View {
             }
             .focused($pane, equals: .list)
             .navigationSplitViewColumnWidth(min: 280, ideal: 420)
+            .toolbar {
+                ToolbarItemGroup {
+                    Button("New Secret", systemImage: "plus") { editor.beginCreate(vault: context.selectedVault) }
+                        .disabled(context.selectedVault == nil)
+                        .help("New secret (⌘N)")
+                    Button("Search", systemImage: "magnifyingglass") { palette.toggle() }
+                        .help("Command palette (⌘K)")
+                    Button("Reload", systemImage: "arrow.clockwise") { refreshAll() }
+                        .help("Reload vaults and refresh secrets (⌘R)")
+                }
+            }
         } detail: {
             SecretDetailView()
                 .focusable()
@@ -46,14 +57,6 @@ struct MainView: View {
                 AccountMenu()
                 ContextPickers()
                 if context.isProduction { ProdBadge() }
-            }
-            ToolbarItem {
-                Button("Search", systemImage: "magnifyingglass") { palette.toggle() }
-                    .help("Command palette (⌘K)")
-            }
-            ToolbarItem {
-                Button("Reload", systemImage: "arrow.clockwise") { refreshAll() }
-                    .help("Reload vaults and refresh secrets (⌘R)")
             }
         }
         .focusedSceneValue(\.menuActions, menuActions)

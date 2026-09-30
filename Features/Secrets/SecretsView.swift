@@ -94,11 +94,6 @@ struct SecretsView: View {
         }
         .toolbar {
             ToolbarItem {
-                Button("New Secret", systemImage: "plus") { editor.beginCreate(vault: context.selectedVault) }
-                    .disabled(context.selectedVault == nil)
-                    .help("New secret (⌘N)")
-            }
-            ToolbarItem {
                 Button("Copy Names", systemImage: "doc.on.doc") { copyNames() }
                     .disabled(secrets.selection.isEmpty)
                     .help("Copy selected secret names (⇧⌘C)")
