@@ -103,7 +103,7 @@ final class LockModel {
     func unlock() async {
         guard isEnabled, isLocked, !isAuthenticating else { return }
         isAuthenticating = true
-        let success = await authenticator.authenticate(reason: "Unlock Secreter")
+        let success = await authenticator.authenticate(reason: "Unlock Keystone")
         isAuthenticating = false
         if success {
             isLocked = false

@@ -8,7 +8,7 @@ struct OnboardingView: View {
     var body: some View {
         VStack(spacing: 20) {
             Image(systemName: "key.viewfinder").font(.system(size: 48)).foregroundStyle(.tint)
-            Text("Welcome to Secreter").font(.largeTitle.bold())
+            Text("Welcome to Keystone").font(.largeTitle.bold())
             switch model.azureStatus {
             case .checking:
                 ProgressView()

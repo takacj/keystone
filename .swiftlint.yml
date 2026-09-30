@@ -1,12 +1,12 @@
 included:
   - App
   - Features
-  - SecreterKit/Sources
-  - SecreterKit/Tests
+  - KeystoneKit/Sources
+  - KeystoneKit/Tests
   - Tests
 excluded:
   - .build
-  - SecreterKit/.build
+  - KeystoneKit/.build
 line_length:
   warning: 160
   error: 240

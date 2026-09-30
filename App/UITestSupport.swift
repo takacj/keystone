@@ -22,7 +22,7 @@ enum UITestSupport {
 
     /// Fresh per-launch state directory, so runs never share favorites/recents.
     static let stateDirectory: URL = {
-        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("secreter-uitest", isDirectory: true)
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("keystone-uitest", isDirectory: true)
         try? FileManager.default.removeItem(at: dir)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
@@ -185,8 +185,8 @@ struct MockAzureTransport: HTTPTransport {
 extension AppModel {
     /// App model for `-UITestMode`: fixed signed-in account, mock token provider and HTTP transport.
     static func uiTest() -> AppModel {
-        let defaults = UserDefaults(suiteName: "com.jtakac.secreter.uitest") ?? .standard
-        defaults.removePersistentDomain(forName: "com.jtakac.secreter.uitest")
+        let defaults = UserDefaults(suiteName: "com.jtakac.keystone.uitest") ?? .standard
+        defaults.removePersistentDomain(forName: "com.jtakac.keystone.uitest")
         return AppModel(
             defaults: defaults, mock: (MockTokenProvider(), MockAzureTransport(secretCount: UITestSupport.secretCount)))
     }

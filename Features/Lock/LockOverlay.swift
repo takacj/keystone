@@ -9,7 +9,7 @@ struct LockOverlay: View {
             Rectangle().fill(.ultraThickMaterial)
             VStack(spacing: 12) {
                 Image(systemName: "lock.fill").font(.system(size: 40))
-                Text("Secreter is locked").font(.title2)
+                Text("Keystone is locked").font(.title2)
                 Button("Unlock with Touch ID") { Task { await lock.unlock() } }
                     .keyboardShortcut(.defaultAction)
                     .disabled(lock.isAuthenticating)

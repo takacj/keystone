@@ -1,12 +1,12 @@
-name: Secreter
+name: Keystone
 options:
   bundleIdPrefix: com.jtakac
   deploymentTarget:
     macOS: "26.0"
   createIntermediateGroups: true
 packages:
-  SecreterKit:
-    path: SecreterKit
+  KeystoneKit:
+    path: KeystoneKit
 settings:
   base:
     SWIFT_VERSION: "6.0"
@@ -16,72 +16,72 @@ settings:
     CODE_SIGN_IDENTITY: "-"
     DEVELOPMENT_TEAM: ""
 targets:
-  Secreter:
+  Keystone:
     type: application
     platform: macOS
     sources: [App, Features, Resources]
     dependencies:
-      - package: SecreterKit
+      - package: KeystoneKit
         product: AzureCLI
-      - package: SecreterKit
+      - package: KeystoneKit
         product: AzureAuth
-      - package: SecreterKit
+      - package: KeystoneKit
         product: AzureCore
-      - package: SecreterKit
+      - package: KeystoneKit
         product: AzureARM
-      - package: SecreterKit
+      - package: KeystoneKit
         product: KeyVaultSecrets
-      - package: SecreterKit
+      - package: KeystoneKit
         product: Search
-      - package: SecreterKit
+      - package: KeystoneKit
         product: Persistence
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.jtakac.secreter
-        PRODUCT_NAME: Secreter
+        PRODUCT_BUNDLE_IDENTIFIER: com.jtakac.keystone
+        PRODUCT_NAME: Keystone
         MARKETING_VERSION: 1.0.0
         CURRENT_PROJECT_VERSION: 1
         GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_CFBundleDisplayName: Secreter
+        INFOPLIST_KEY_CFBundleDisplayName: Keystone
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.developer-tools
         INFOPLIST_KEY_NSHumanReadableCopyright: ""
         ENABLE_APP_SANDBOX: NO
         ENABLE_HARDENED_RUNTIME: YES
-        CODE_SIGN_ENTITLEMENTS: Resources/Secreter.entitlements
+        CODE_SIGN_ENTITLEMENTS: Resources/Keystone.entitlements
         CODE_SIGN_IDENTITY: "-"
         CODE_SIGN_STYLE: Manual
-  SecreterTests:
+  KeystoneTests:
     type: bundle.unit-test
     platform: macOS
-    sources: [Tests/SecreterTests]
+    sources: [Tests/KeystoneTests]
     dependencies:
-      - target: Secreter
+      - target: Keystone
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
-        PRODUCT_BUNDLE_IDENTIFIER: com.jtakac.secreter.tests
-  SecreterUITests:
+        PRODUCT_BUNDLE_IDENTIFIER: com.jtakac.keystone.tests
+  KeystoneUITests:
     type: bundle.ui-testing
     platform: macOS
-    sources: [Tests/SecreterUITests]
+    sources: [Tests/KeystoneUITests]
     dependencies:
-      - target: Secreter
+      - target: Keystone
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
-        PRODUCT_BUNDLE_IDENTIFIER: com.jtakac.secreter.uitests
-        TEST_TARGET_NAME: Secreter
+        PRODUCT_BUNDLE_IDENTIFIER: com.jtakac.keystone.uitests
+        TEST_TARGET_NAME: Keystone
 schemes:
-  Secreter:
+  Keystone:
     build:
       targets:
-        Secreter: all
+        Keystone: all
     test:
-      targets: [SecreterTests]
-  SecreterUI:
+      targets: [KeystoneTests]
+  KeystoneUI:
     build:
       targets:
-        Secreter: all
+        Keystone: all
     test:
-      targets: [SecreterUITests]
+      targets: [KeystoneUITests]

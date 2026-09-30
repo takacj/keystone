@@ -51,7 +51,7 @@ extension FocusedValues {
 }
 
 /// Menu bar: Secret, Vault menus plus View/Find additions.
-struct SecreterCommands: Commands {
+struct KeystoneCommands: Commands {
     @FocusedValue(\.menuActions) private var actions
 
     var body: some Commands {
