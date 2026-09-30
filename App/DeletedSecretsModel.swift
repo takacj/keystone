@@ -146,8 +146,6 @@ final class DeletedSecretsModel {
     /// Forces the next `load` to refetch (after deletes elsewhere); list is refetched when shown.
     func noteStale() { phase = .idle }
 
-    func clearFailures() { failures = [] }
-
     private func run(
         _ names: [String],
         _ pick: (DeletedSecretsOps) -> @Sendable (String) async throws -> Void

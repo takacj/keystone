@@ -27,7 +27,7 @@ enum PaletteItem: Identifiable, Hashable {
     var copyName: String { secretName ?? vault.name }
 }
 
-/// ⌘K palette state: tenant-wide vault discovery + background `NameIndex`, scope toggle, fuzzy results (plan §6.2).
+/// ⌘K palette state: tenant-wide vault discovery + background `NameIndex`, scope toggle, fuzzy results.
 @MainActor @Observable
 final class CommandPaletteModel {
     enum Scope: String, CaseIterable, Identifiable {

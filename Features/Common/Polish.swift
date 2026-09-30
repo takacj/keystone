@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Expiry classification for pills (plan §6.4): expired red, ≤30d orange.
+/// Expiry classification for pills: expired red, ≤30d orange.
 enum ExpiryStatus: Equatable {
     case none
     case expired

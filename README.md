@@ -4,7 +4,7 @@ macOS Azure Key Vault secrets manager.
 
 ## Build & test
 - `make build` — generate project (xcodegen) and build.
-- `make test` — SecreterKit package tests + app unit tests (incl. mock-data perf targets from plan §9).
+- `make test` — SecreterKit package tests + app unit tests (incl. mock-data perf targets).
 - `make test-ui` — XCUITest smoke test (`-UITestMode`: mock account, token provider and HTTP; no `az`/network).
   Separate from `make test` because it needs a GUI session and Accessibility permission.
   Launch the app manually with `-UITestMode` (and optionally `-UITestSecretCount N`) to see the mock environment.

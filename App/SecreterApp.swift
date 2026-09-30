@@ -29,7 +29,7 @@ struct SecreterApp: App {
     }
 }
 
-/// ⌘N is "New Secret" (plan §6.3); New Window moves to ⇧⌘N so the two don't collide.
+/// ⌘N is "New Secret"; New Window moves to ⇧⌘N so the two don't collide.
 private struct NewWindowCommand: Commands {
     @Environment(\.openWindow) private var openWindow
 

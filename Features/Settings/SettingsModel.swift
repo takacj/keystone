@@ -1,6 +1,6 @@
 import Foundation
 
-/// UserDefaults-backed settings helpers shared by the Settings scene (plan §6.4).
+/// UserDefaults-backed settings helpers shared by the Settings scene.
 enum SettingsDefaults {
     static let defaultLockIdleMinutes = 10
     static let defaultRemaskSeconds = 20

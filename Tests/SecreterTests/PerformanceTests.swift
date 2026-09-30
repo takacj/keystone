@@ -7,7 +7,7 @@ import Testing
 
 @testable import Secreter
 
-/// Plan §9 performance targets over mock data (no network, no `az`).
+/// Performance targets over mock data (no network, no `az`).
 @MainActor
 @Suite struct PerformanceTests {
     private static func vaultClient(count: Int) -> KeyVaultSecretsClient {

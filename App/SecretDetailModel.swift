@@ -54,7 +54,6 @@ final class SecretDetailModel {
     }
 
     var isJSON: Bool { value.flatMap(Self.prettyJSON) != nil }
-    var isMultiline: Bool { value?.contains("\n") ?? false }
 
     // MARK: Loading
 
@@ -141,7 +140,7 @@ final class SecretDetailModel {
     /// Context switch: drop everything for the previous context.
     func contextChanged() { clear() }
 
-    /// Touch ID lock (#98): mask, forget the value, empty the cache.
+    /// Touch ID lock: mask, forget the value, empty the cache.
     func clear() {
         generation += 1
         mask()

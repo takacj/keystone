@@ -1,6 +1,6 @@
 import Foundation
 
-/// Pure production-context detector (plan §7). Case-insensitive token-prefix match of each pattern
+/// Pure production-context detector. Case-insensitive token-prefix match of each pattern
 /// (names split on non-alphanumerics; a token matches if it equals or starts with the pattern: `kv-production` matches `prod`, `delivery` doesn't match `live`) against the subscription display name and the vault name.
 struct ProdGuard: Equatable {
     static let defaultsKey = "prodPatterns"

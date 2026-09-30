@@ -5,7 +5,7 @@ import Foundation
 import KeyVaultSecrets
 import Testing
 
-/// Opt-in tests against real Azure test vaults (plan §9). Skipped unless the env vars are set:
+/// Opt-in tests against real Azure test vaults. Skipped unless the env vars are set:
 /// - `SECRETER_IT_PROFILE_DIR`: `AZURE_CONFIG_DIR` of a logged-in `az` profile
 /// - `SECRETER_IT_TENANT`: tenant id owning the vaults
 /// - `SECRETER_IT_VAULT_RBAC` / `SECRETER_IT_VAULT_POLICY`: vault URIs (`https://name.vault.azure.net`)

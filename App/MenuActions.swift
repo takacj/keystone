@@ -20,7 +20,7 @@ final class ViewRequests {
     func requestVersions() { showVersions += 1 }
 }
 
-/// Actions the focused main window exposes to the menu bar (plan §6.3).
+/// Actions the focused main window exposes to the menu bar.
 struct MenuActions {
     var hasVault = false
     var hasSelection = false

@@ -10,10 +10,6 @@ private func script(_ body: String) throws -> URL {
     return url
 }
 
-@Test func moduleName() {
-    #expect(AzureCLIModule.name == "AzureCLI")
-}
-
 @Suite struct ErrorParsingTests {
     @Test(arguments: ["AADSTS50076", "AADSTS50079", "AADSTS700082"])
     func interaction(code: String) {

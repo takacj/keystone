@@ -10,7 +10,7 @@ enum VaultHealth: Equatable {
     case unreachable  // ⚠
 }
 
-/// Tenant → subscription → vault selection for the current account (plan §5 data flow).
+/// Tenant → subscription → vault selection for the current account.
 ///
 /// Every switch cancels the in-flight load of the previous context. Selection, favorites and recents
 /// are persisted per account in `ContextStateStore`.
@@ -39,14 +39,12 @@ final class ContextModel {
     private(set) var tenantsError: Error?
     private(set) var subscriptionsError: Error?
     private(set) var vaultsError: Error?
-    var loadError: Error? { vaultsError ?? subscriptionsError ?? tenantsError }
     /// Sidebar "All" filter text.
     var vaultFilter = ""
 
-    /// Bumped on every vault switch; #90 can use `.task(id:)` on it, or just on `selectedVaultID`.
+    /// Bumped on every vault switch.
     private(set) var contextGeneration = 0
 
-    var selectedTenant: Tenant? { tenants.first { $0.tenantId == selectedTenantID } }
     var selectedSubscription: Subscription? { subscriptions.first { $0.subscriptionId == selectedSubscriptionID } }
     /// Content column shows “Deleted secrets” of the selected vault instead of the secrets list.
     var showsDeletedSecrets = false

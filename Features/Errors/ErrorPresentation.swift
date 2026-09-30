@@ -12,7 +12,7 @@ enum ErrorAction: Equatable, Hashable {
     case openPortal
 }
 
-/// Pure mapping from `AzureAPIError` / `AzureCLIError` to user-facing copy (plan §4.3, §10).
+/// Pure mapping from `AzureAPIError` / `AzureCLIError` to user-facing copy.
 struct ErrorPresentation: Equatable {
     var title: String
     var message: String

@@ -153,18 +153,4 @@ final class LockModel {
             MainActor.assumeIsolated { self?.checkIdle() }
         }
     }
-
-    func stopMonitoring() {
-        timer?.invalidate()
-        timer = nil
-        let workspace = NSWorkspace.shared.notificationCenter
-        let dist = DistributedNotificationCenter.default()
-        for observer in observers {
-            workspace.removeObserver(observer)
-            dist.removeObserver(observer)
-        }
-        observers = []
-        if let eventMonitor { NSEvent.removeMonitor(eventMonitor) }
-        eventMonitor = nil
-    }
 }

@@ -3,7 +3,7 @@ import SwiftUI
 
 /// Reusable error display with actions. Handles re-login / copy / portal itself; `onRetry` is the caller's.
 ///
-/// Usage (#90): `ErrorView(error: err, vault: context.selectedVault, onRetry: { model.reload() })`.
+/// Usage: `ErrorView(error: err, vault: context.selectedVault, onRetry: { model.reload() })`.
 /// It also flags the vault (🔒 / ⚠) in the sidebar via `ContextModel.markVault`.
 struct ErrorView: View {
     @Environment(AppModel.self) private var app

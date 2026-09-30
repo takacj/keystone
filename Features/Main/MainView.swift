@@ -5,7 +5,7 @@ import Persistence
 import Search
 import SwiftUI
 
-/// Three-column main window: vault sidebar, secrets (#90), detail (#91).
+/// Three-column main window: vault sidebar, secrets, detail.
 struct MainView: View {
     @Environment(AppModel.self) private var model
     @State private var context = ContextModel(

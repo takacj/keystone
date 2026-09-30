@@ -1,7 +1,7 @@
 import AzureARM
 import SwiftUI
 
-/// Spotlight-style glass overlay for ⌘K (plan §6.2).
+/// Spotlight-style glass overlay for ⌘K.
 struct CommandPaletteView: View {
     @Environment(CommandPaletteModel.self) private var palette
     @FocusState private var focused: Bool
