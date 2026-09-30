@@ -26,6 +26,7 @@ private struct LockedModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
+            .toolbarVisibility(lock.isLocked ? .hidden : .automatic, for: .windowToolbar)
             .blur(radius: lock.isLocked ? 30 : 0)
             .allowsHitTesting(!lock.isLocked)
             .accessibilityHidden(lock.isLocked)

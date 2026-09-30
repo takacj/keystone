@@ -45,8 +45,9 @@ struct ProdConfirmationView: View {
             }
             HStack {
                 Spacer()
-                Button("Cancel", role: .cancel, action: onCancel).keyboardShortcut(.cancelAction)
+                Button("Cancel", role: .cancel, action: onCancel).keyboardShortcut(.cancelAction).tint(.primary)
                 Button(actionTitle, role: .destructive, action: onConfirm)
+                    .buttonStyle(.borderedProminent)
                     .keyboardShortcut(.defaultAction)
                     .disabled(!satisfied)
             }

@@ -154,12 +154,13 @@ struct SecretDetailView: View {
         GridRow {
             label(title)
             if let date {
-                HStack(spacing: 8) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text(date.formatted(date: .abbreviated, time: .shortened))
                     if title == "Expires" {
                         ExpiryPill(date: date)
                     } else {
-                        Text(date, format: .relative(presentation: .numeric, unitsStyle: .abbreviated))
+                        Text(date, format: .relative(presentation: .numeric, unitsStyle: .wide))
+                            .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                 }

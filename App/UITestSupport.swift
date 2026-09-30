@@ -10,8 +10,13 @@ enum UITestSupport {
     static let tenantID = "11111111-1111-1111-1111-111111111111"
     static let subscriptionID = "22222222-2222-2222-2222-222222222222"
     static let accountID = UUID(uuidString: "33333333-3333-3333-3333-333333333333")!
-    static let vaultNames = ["kv-dev", "kv-staging"]
+    static let prodVaultName = "kv-prod-weu"
+    static var vaultNames: [String] {
+        ["kv-dev", "kv-staging"] + (hasFlag("-UITestProd") ? [prodVaultName] : [])
+    }
     static let secretValuePrefix = "s3cr3t-"
+
+    static func hasFlag(_ flag: String) -> Bool { ProcessInfo.processInfo.arguments.contains(flag) }
 
     static var isActive: Bool { ProcessInfo.processInfo.arguments.contains(argument) }
 
@@ -123,11 +128,20 @@ struct MockAzureTransport: HTTPTransport {
         let base = "https://\(url.host ?? "")"
         let stamp = Int(Date().timeIntervalSince1970) - 86_400
         func item(_ name: String) -> [String: Any] {
-            [
+            var attributes: [String: Any] = ["enabled": true, "created": stamp, "updated": stamp]
+            var contentType = "text/plain"
+            switch name {
+            case "svc-0001": attributes["exp"] = stamp + 10 * 86_400
+            case "svc-0002": attributes["enabled"] = false
+            case "svc-0003": attributes["exp"] = stamp - 86_400
+            case "svc-0004": contentType = "application/json"
+            default: break
+            }
+            return [
                 "id": "\(base)/secrets/\(name)",
-                "attributes": ["enabled": true, "created": stamp, "updated": stamp],
+                "attributes": attributes,
                 "tags": name.hasPrefix("svc-") ? ["app": "svc"] : [:],
-                "contentType": "text/plain",
+                "contentType": contentType,
             ]
         }
         switch parts.count {

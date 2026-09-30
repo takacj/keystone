@@ -24,6 +24,24 @@ struct LocalAuthenticator: Authenticating {
     }
 }
 
+/// Never succeeds; lets `-UITestLock` keep the lock screen on screen.
+struct PendingAuthenticator: Authenticating {
+    func authenticate(reason: String) async -> Bool {
+        try? await Task.sleep(for: .seconds(3600))
+        return false
+    }
+}
+
+extension LockModel {
+    /// Lock model for the app: real Touch ID, or (`-UITestLock`) enabled with an authenticator that never succeeds.
+    static func makeDefault() -> LockModel {
+        if UITestSupport.hasFlag("-UITestLock") {
+            return LockModel(enabled: true, authenticator: PendingAuthenticator())
+        }
+        return LockModel()
+    }
+}
+
 /// App lock: locks on launch, idle, sleep/screen lock and ⌘L; unlocks via Touch ID / password.
 @MainActor @Observable
 final class LockModel {

@@ -50,7 +50,7 @@ struct QuickSwitchSheet: View {
                 .listStyle(.plain)
             }
         }
-        .frame(width: 420, height: 320)
+        .frame(width: 420, height: min(320, 76 + 28 * CGFloat(max(items.count, 2))))
         .onAppear { focused = true }
         .onExitCommand { dismiss() }
     }

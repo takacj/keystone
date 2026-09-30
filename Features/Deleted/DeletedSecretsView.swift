@@ -20,7 +20,7 @@ struct DeletedSecretsView: View {
                 VStack(spacing: 0) {
                     header(vault)
                     Divider()
-                    content(vault)
+                    content(vault).frame(maxWidth: .infinity, maxHeight: .infinity)
                     Divider()
                     footer
                 }

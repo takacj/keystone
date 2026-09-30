@@ -38,6 +38,8 @@ struct LoginFlowView: View {
                 Label("Sign in with Azure", systemImage: "person.badge.key")
             }
             .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .frame(maxWidth: .infinity)
             .keyboardShortcut(.defaultAction)
         }
         .textFieldStyle(.roundedBorder)

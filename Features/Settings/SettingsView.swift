@@ -154,7 +154,7 @@ struct SearchSettingsView: View {
                     ForEach(CommandPaletteModel.Scope.allCases) { Text($0.rawValue).tag($0.storageValue) }
                 }
                 .pickerStyle(.radioGroup)
-                Text("Applies the next time Secreter launches; the palette's own toggle still switches per search.")
+                Text("Applies immediately; the palette's own toggle still switches per search.")
                     .font(.caption).foregroundStyle(.secondary)
             }
         }

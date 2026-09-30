@@ -11,6 +11,13 @@ struct SecretEditorSheet: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(model.mode == .create ? "New secret" : "Edit secret").font(.headline)
+                Text(model.vault.name).font(.subheadline).foregroundStyle(.secondary)
+                Spacer()
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 16)
             Form {
                 if model.mode == .create {
                     TextField("Name", text: $model.name)
@@ -46,6 +53,7 @@ struct SecretEditorSheet: View {
                     Text(error.localizedDescription).font(.caption).foregroundStyle(.red).lineLimit(2)
                 }
                 Spacer()
+                if model.isSaving { ProgressView().controlSize(.small) }
                 Button("Cancel", role: .cancel) { editor.sheet = nil }
                     .keyboardShortcut(.cancelAction)
                 Button(model.mode == .create ? "Create" : "Save") {

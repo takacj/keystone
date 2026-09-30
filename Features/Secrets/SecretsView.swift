@@ -208,7 +208,7 @@ struct SecretsView: View {
             }
             .overlay {
                 if secrets.visible.isEmpty && !secrets.rows.isEmpty {
-                    ContentUnavailableView.search
+                    NoMatchingSecretsView(vaultName: vault.name) { secrets.clearFilters() }
                 }
             }
         }
@@ -295,5 +295,22 @@ private struct SecretChips: View {
             }
         }
         .padding(.horizontal, 10).padding(.bottom, 6)
+    }
+}
+
+private struct NoMatchingSecretsView: View {
+    let vaultName: String
+    let clear: () -> Void
+
+    var body: some View {
+        ContentUnavailableView {
+            Label("No matching secrets", systemImage: "magnifyingglass")
+        } description: {
+            Text("Nothing in \(vaultName) matches the current filter.")
+        } actions: {
+            Button("Clear Filters", action: clear)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(.background)
     }
 }

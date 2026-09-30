@@ -122,4 +122,71 @@ final class SecretsSmokeUITests: XCTestCase {
         XCTAssertTrue(create.waitForNonExistence(timeout: timeout), "create sheet did not close")
         XCTAssertEqual(app.state, .runningForeground, "app crashed")
     }
+
+    /// Escape closes the ⌘K palette and the clear-filters empty state resets the table.
+    @MainActor
+    func testPaletteEscapeAndEmptyFilterState() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-UITestMode", "-ApplePersistenceIgnoreState", "YES"]
+        app.launch()
+        app.activate()
+        if !app.windows.firstMatch.waitForExistence(timeout: 5) { app.typeKey("n", modifierFlags: [.command, .shift]) }
+        app.staticTexts["kv-dev"].firstMatch.click()
+        XCTAssertTrue(app.staticTexts["db-password"].waitForExistence(timeout: timeout))
+
+        app.typeKey("k", modifierFlags: .command)
+        let query = app.textFields["palette.query"]
+        XCTAssertTrue(query.waitForExistence(timeout: timeout))
+        app.typeKey(.escape, modifierFlags: [])
+        XCTAssertTrue(query.waitForNonExistence(timeout: timeout), "Escape did not close the palette")
+
+        let filter = app.textFields["secrets.filter"]
+        filter.click()
+        filter.typeText("zzzz-no-match")
+        let clear = app.buttons["Clear Filters"]
+        XCTAssertTrue(clear.waitForExistence(timeout: timeout), "empty filter state missing")
+        clear.click()
+        XCTAssertTrue(app.staticTexts["db-password"].waitForExistence(timeout: timeout))
+    }
+
+    @MainActor
+    private func launch(_ extra: [String]) -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launchArguments = ["-UITestMode", "-ApplePersistenceIgnoreState", "YES"] + extra
+        app.launch()
+        app.activate()
+        if !app.windows.firstMatch.waitForExistence(timeout: 5) { app.typeKey("n", modifierFlags: [.command, .shift]) }
+        return app
+    }
+
+    /// Production vault: delete needs the typed secret name before the button enables.
+    @MainActor
+    func testProdDeleteRequiresTypedName() {
+        let app = launch(["-UITestProd"])
+        app.descendants(matching: .any)["kv-prod-weu"].firstMatch.click()
+        let row = app.staticTexts["db-password"]
+        XCTAssertTrue(row.waitForExistence(timeout: timeout))
+        row.click()
+        app.typeKey(.delete, modifierFlags: .command)
+        let field = app.sheets.textFields.firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: timeout), "typed confirmation missing")
+        let confirm = app.sheets.buttons["Delete"].firstMatch
+        XCTAssertFalse(confirm.isEnabled)
+        field.typeText("db-password")
+        XCTAssertTrue(confirm.isEnabled)
+    }
+
+    /// `-UITestLock` keeps the lock screen up (authenticator never succeeds).
+    @MainActor
+    func testLockScreenShown() {
+        let app = launch(["-UITestLock"])
+        XCTAssertTrue(app.staticTexts["Secreter is locked"].waitForExistence(timeout: timeout))
+    }
+
+    @MainActor
+    func testOnboardingShownWithoutAccounts() {
+        let app = launch(["-UITestOnboarding"])
+        XCTAssertTrue(app.staticTexts["Welcome to Secreter"].waitForExistence(timeout: timeout))
+        XCTAssertTrue(app.buttons["Sign in with Azure"].exists)
+    }
 }

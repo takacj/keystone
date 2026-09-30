@@ -61,6 +61,7 @@ struct CommandPaletteView: View {
         }
         .background {
             Group {
+                Button("") { palette.close() }.keyboardShortcut(.cancelAction)
                 Button("") { Task { await palette.copyValue() } }.keyboardShortcut("c", modifiers: .command)
                 Button("") { palette.copyName() }.keyboardShortcut("c", modifiers: [.command, .shift])
             }

@@ -3,7 +3,7 @@ import SwiftUI
 @main
 struct SecreterApp: App {
     @State private var model = UITestSupport.isActive ? AppModel.uiTest() : AppModel()
-    @State private var lock = LockModel()
+    @State private var lock = LockModel.makeDefault()
     static let mainWindowID = "main"
 
     var body: some Scene {

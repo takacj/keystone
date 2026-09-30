@@ -76,9 +76,9 @@ final class AppModel {
         self.init(defaults: defaults)
         mockTokenProvider = mock.tokens
         transport = mock.transport
-        accounts = [UITestSupport.account]
-        selectedAccountID = UITestSupport.accountID
-        azureStatus = .ready(version: nil)
+        accounts = UITestSupport.hasFlag("-UITestOnboarding") ? [] : [UITestSupport.account]
+        selectedAccountID = accounts.isEmpty ? nil : UITestSupport.accountID
+        azureStatus = UITestSupport.hasFlag("-UITestMissingAz") ? .missing : .ready(version: nil)
     }
 
     // MARK: az detection

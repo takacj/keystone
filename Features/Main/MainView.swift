@@ -14,6 +14,8 @@ struct MainView: View {
     @State private var deleted = DeletedSecretsModel()
     @State private var detail = SecretDetailModel()
     @State private var palette = CommandPaletteModel()
+    @AppStorage(CommandPaletteModel.defaultScopeKey) private var paletteDefaultScope =
+        CommandPaletteModel.Scope.currentSubscription.storageValue
     @State private var editor = SecretEditorCoordinator()
     @State private var requests = ViewRequests()
     @State private var switcher: QuickSwitchKind?
@@ -78,6 +80,9 @@ struct MainView: View {
             palette.reset()
         }
         .onChange(of: context.contextGeneration) { detail.contextChanged() }
+        .onChange(of: paletteDefaultScope) {
+            palette.scope = CommandPaletteModel.Scope(storageValue: paletteDefaultScope)
+        }
         .onChange(of: context.selectedTenantID) { palette.startIndexing(tenant: context.selectedTenantID) }
         .onAppear {
             configureSecrets()
@@ -139,6 +144,12 @@ struct MainView: View {
         a.hasSelection = !secrets.selection.isEmpty
         a.hasSingleSelection = secrets.selection.count == 1
         a.canEdit = secrets.selection.count == 1 && detail.phase == .loaded && detail.value != nil
+        if palette.isPresented {
+            a.hasVault = false
+            a.hasSelection = false
+            a.hasSingleSelection = false
+            a.canEdit = false
+        }
         a.showsDeleted = context.showsDeletedSecrets
         a.isFavorite = vault.map { context.isFavorite($0) } ?? false
         a.newSecret = { [editor, context] in editor.beginCreate(vault: context.selectedVault) }
