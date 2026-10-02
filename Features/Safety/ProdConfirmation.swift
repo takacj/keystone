@@ -70,8 +70,9 @@ extension View {
             ProdConfirmationView(
                 title: title, message: message, actionTitle: actionTitle, requiredText: requiredText,
                 onConfirm: {
-                    isPresented.wrappedValue = false
+                    // Confirm first: dismissing runs the binding's setter, which clears the caller's pending state.
                     onConfirm()
+                    isPresented.wrappedValue = false
                 },
                 onCancel: { isPresented.wrappedValue = false })
         }
