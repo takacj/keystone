@@ -15,7 +15,8 @@ struct VaultSidebar: View {
                     context.selectVault($0)
                 })
         ) {
-            if let vault = context.selectedVault {
+            let filtering = !context.vaultFilter.trimmingCharacters(in: .whitespaces).isEmpty
+            if !filtering, let vault = context.selectedVault {
                 Section(vault.name) {
                     Button {
                         context.showsDeletedSecrets = false
@@ -31,18 +32,19 @@ struct VaultSidebar: View {
                     .buttonStyle(.plain).fontWeight(context.showsDeletedSecrets ? .semibold : .regular)
                 }
             }
-            if !context.favoriteVaults.isEmpty {
+            if !filtering, !context.favoriteVaults.isEmpty {
                 Section("Favorites") { rows(context.favoriteVaults) }
             }
-            if !context.recentVaults.isEmpty {
+            if !filtering, !context.recentVaults.isEmpty {
                 Section("Recent") { rows(context.recentVaults) }
             }
-            Section("Vaults (\(context.vaults.count))") {
+            Section {
                 switch context.vaultsPhase {
-                case .loading: ProgressView().controlSize(.small)
+                case .loading:
+                    if context.vaults.isEmpty { ProgressView().controlSize(.small) }
                 case .failed(let message):
                     if let error = context.vaultsError {
-                        ErrorView(error: error, compact: true, onRetry: { context.reload() })
+                        ErrorView(error: error, compact: true, onRetry: { context.refreshVaults() })
                     } else {
                         Label(message, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
                     }
@@ -50,8 +52,21 @@ struct VaultSidebar: View {
                     if context.vaults.isEmpty {
                         Text(context.selectedSubscriptionID == nil ? "No subscription" : "No vaults")
                             .foregroundStyle(.secondary)
+                    } else if filtering && context.filteredVaults.isEmpty {
+                        Text("No matching vaults").foregroundStyle(.secondary)
                     }
-                    rows(context.filteredVaults)
+                }
+                // One rows call for every phase so refresh/failure keep rows in place.
+                rows(context.filteredVaults)
+            } header: {
+                HStack(spacing: 6) {
+                    Text(
+                        filtering
+                            ? "Vaults (\(context.filteredVaults.count) of \(context.vaults.count))"
+                            : "Vaults (\(context.vaults.count))")
+                    if context.vaultsPhase == .loading && !context.vaults.isEmpty {
+                        ProgressView().controlSize(.mini)
+                    }
                 }
             }
         }

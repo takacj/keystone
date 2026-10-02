@@ -134,7 +134,9 @@ struct SecretDetailView: View {
             }
             dateRow("Created", attrs?.created)
             dateRow("Updated", attrs?.updated)
-            dateRow("Not before", attrs?.notBefore)
+            if let notBefore = attrs?.notBefore {
+                dateRow("Not before", notBefore)
+            }
             dateRow("Expires", attrs?.expires)
             if let version = detail.bundle?.version {
                 GridRow {

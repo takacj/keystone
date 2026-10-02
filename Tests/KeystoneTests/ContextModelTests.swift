@@ -15,6 +15,7 @@ private final class Log: @unchecked Sendable {
 private struct Fake: HTTPTransport, TokenProvider {
     let log: Log
     var gate: Bool = false
+    var twoVaults: Bool = false
     func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
         let url = request.url!.absoluteString
         log.lock.withLock { log.urls.append(url) }
@@ -22,9 +23,11 @@ private struct Fake: HTTPTransport, TokenProvider {
         let body: String
         if url.contains("/providers/Microsoft.KeyVault/vaults") {
             let sub = url.components(separatedBy: "/subscriptions/")[1].components(separatedBy: "/")[0]
-            body = """
-                {"value":[{"id":"/subscriptions/\(sub)/resourceGroups/rg/providers/Microsoft.KeyVault/vaults/kv-\(sub)","name":"kv-\(sub)","location":"we","properties":{"vaultUri":"https://kv-\(sub).vault.azure.net/"}}]}
-                """
+            let names = twoVaults ? ["kv-\(sub)", "kvb-\(sub)"] : ["kv-\(sub)"]
+            let items = names.map {
+                #"{"id":"/subscriptions/\#(sub)/resourceGroups/rg/providers/Microsoft.KeyVault/vaults/\#($0)","name":"\#($0)","location":"we","properties":{"vaultUri":"https://\#($0).vault.azure.net/"}}"#
+            }
+            body = #"{"value":["# + items.joined(separator: ",") + "]}"
         } else if url.contains("/subscriptions?") {
             body =
                 #"{"value":[{"subscriptionId":"s1","displayName":"One","state":"Enabled"},{"subscriptionId":"s2","displayName":"Two","state":"Enabled"}]}"#
@@ -103,6 +106,69 @@ private struct Fake: HTTPTransport, TokenProvider {
         #expect(model.tenants.isEmpty)
         try? await Task.sleep(for: .milliseconds(50))
         #expect(model.subscriptions.isEmpty)
+    }
+
+    private func loadedTwoVaults(_ store: ContextStateStore) async -> ContextModel {
+        let model = ContextModel(store: store)
+        model.switchAccount(account, client: client(Fake(log: Log(), twoVaults: true)))
+        await settle(model) { model.vaultsPhase == .idle && model.vaults.count == 2 }
+        return model
+    }
+
+    /// Seeds persisted recents as [B, A] via a first session; returns a fresh session plus A and B.
+    private func seededRecents(_ store: ContextStateStore) async -> (ContextModel, Vault, Vault) {
+        let first = await loadedTwoVaults(store)
+        let a = first.vaults.first { $0.name == "kv-s1" }!
+        let b = first.vaults.first { $0.name == "kvb-s1" }!
+        first.selectVault(a.id)
+        first.selectVault(b.id)
+        return (await loadedTwoVaults(store), a, b)
+    }
+
+    @Test func sidebarRecentsStayStable() async {
+        let store = makeStore()
+        let (model, a, b) = await seededRecents(store)
+        #expect(model.recentVaults.map(\.name) == ["kvb-s1", "kv-s1"])
+        model.selectVault(a.id)
+        model.selectVault(b.id)
+        model.selectVault(a.id)
+        #expect(model.recentVaults.map(\.name) == ["kvb-s1", "kv-s1"])
+        #expect(store.load(accountID: account.id).recents == [a.id, b.id])
+
+        // reload keeps the snapshot.
+        model.reload()
+        await settle(model) { model.vaults.count == 2 }
+        #expect(model.recentVaults.map(\.name) == ["kvb-s1", "kv-s1"])
+    }
+
+    @Test func unseenVaultNotAddedToSidebarRecents() async {
+        let store = makeStore()
+        let model = await loadedTwoVaults(store)
+        let a = model.vaults.first { $0.name == "kv-s1" }!
+        model.selectVault(a.id)
+        #expect(model.recentVaults.isEmpty)
+        #expect(store.load(accountID: account.id).recents == [a.id])
+    }
+
+    @Test func favoritesExcludedFromRecents() async {
+        let (model, a, _) = await seededRecents(makeStore())
+        model.toggleFavorite(a)
+        #expect(model.recentVaults.map(\.name) == ["kvb-s1"])
+    }
+
+    @Test func refreshVaultsKeepsSelection() async {
+        let model = await loadedTwoVaults(makeStore())
+        let b = model.vaults.first { $0.name == "kvb-s1" }!
+        model.selectVault(b.id)
+        let generation = model.contextGeneration
+        model.refreshVaults()
+        #expect(model.vaultsPhase == .loading)
+        #expect(model.vaults.count == 2)
+        #expect(model.selectedVaultID == b.id)
+        await settle(model) { model.vaultsPhase == .idle }
+        #expect(model.selectedVaultID == b.id)
+        #expect(model.vaults.count == 2)
+        #expect(model.contextGeneration == generation)
     }
 
     @Test func filterAndPortalURL() {

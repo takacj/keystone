@@ -78,6 +78,8 @@ final class SecretsModel {
     var onHealth: (Vault, VaultHealth?) -> Void
     private let now: () -> Date
     private var cache: [String: (rows: [SecretRow], at: Date)] = [:]
+    /// Bumped per load; a superseded load stops writing `rows` / cache.
+    private var loadGeneration = 0
 
     init(
         clientFactory: @escaping (Vault) -> KeyVaultSecretsClient? = { _ in nil },
@@ -127,6 +129,9 @@ final class SecretsModel {
 
     /// Loads secrets of `vault`, streaming pages into `rows`. Cached for 5 min unless `force`.
     func load(vault: Vault, force: Bool = false) async {
+        loadGeneration += 1
+        let generation = loadGeneration
+        func isStale() -> Bool { Task.isCancelled || generation != loadGeneration }
         if self.vault?.id != vault.id {
             self.vault = vault
             rows = []
@@ -151,6 +156,7 @@ final class SecretsModel {
         var first = true
         do {
             for try await page in client.listSecrets(maxResults: 25) {
+                if isStale() { return }
                 acc += page.map(SecretRow.init)
                 rows = acc
                 if first {
@@ -159,6 +165,8 @@ final class SecretsModel {
                 }
                 applyFilter()
             }
+            // A cancelled stream ends without throwing: never cache or show a truncated listing as complete.
+            if isStale() { return }
             if first { rows = [] }  // empty vault
             cache[vault.id] = (acc, now())
             loadedAt = now()
@@ -168,7 +176,7 @@ final class SecretsModel {
         } catch is CancellationError {
             return
         } catch {
-            if Task.isCancelled { return }
+            if isStale() { return }
             let api = error as? AzureAPIError
             self.error = error
             errorMessage = Self.message(for: error)

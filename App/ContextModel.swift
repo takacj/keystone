@@ -34,6 +34,8 @@ final class ContextModel {
     private(set) var vaultsPhase: Phase = .idle
     private(set) var favoriteIDs: [String] = []
     private(set) var recentIDs: [String] = []
+    /// Recent list shown in the sidebar: snapshot taken on account switch; frozen for the session so rows never move.
+    private(set) var sidebarRecentIDs: [String] = []
     private(set) var health: [String: VaultHealth] = [:]
     /// Underlying errors of the last failed load (for `ErrorView`); cleared when the load restarts.
     private(set) var tenantsError: Error?
@@ -52,7 +54,7 @@ final class ContextModel {
     var selectedVault: Vault? { vaults.first { $0.id.lowercased() == selectedVaultID?.lowercased() } }
 
     var favoriteVaults: [Vault] { favoriteIDs.compactMap(vault(withID:)) }
-    var recentVaults: [Vault] { recentIDs.compactMap(vault(withID:)) }
+    var recentVaults: [Vault] { sidebarRecentIDs.compactMap(vault(withID:)).filter { !isFavorite($0) } }
     var filteredVaults: [Vault] {
         let all = vaults.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
         let q = vaultFilter.trimmingCharacters(in: .whitespaces)
@@ -76,6 +78,7 @@ final class ContextModel {
     /// Switches to `account` (or clears with nil): cancels loads, restores persisted selection, reloads tenants.
     func switchAccount(_ account: AccountProfile?, client: ARMClient?) {
         cancelAll()
+        let accountChanged = account?.id != self.account?.id || self.account == nil
         self.account = account
         self.client = client
         tenants = []
@@ -96,11 +99,13 @@ final class ContextModel {
             state = AccountContextState()
             favoriteIDs = []
             recentIDs = []
+            sidebarRecentIDs = []
             return
         }
         state = store.load(accountID: account.id)
         favoriteIDs = state.favorites
         recentIDs = state.recents
+        if accountChanged { sidebarRecentIDs = state.recents }
         loadTenants()
     }
 
@@ -146,26 +151,6 @@ final class ContextModel {
             state.recents = recentIDs
         }
         persist()
-    }
-
-    // MARK: Favorites / health
-
-    func isFavorite(_ vault: Vault) -> Bool {
-        favoriteIDs.contains { $0.lowercased() == vault.id.lowercased() }
-    }
-
-    func toggleFavorite(_ vault: Vault) {
-        if isFavorite(vault) {
-            favoriteIDs.removeAll { $0.lowercased() == vault.id.lowercased() }
-        } else {
-            favoriteIDs.append(vault.id)
-        }
-        state.favorites = favoriteIDs
-        persist()
-    }
-
-    func markVault(_ vault: Vault, _ value: VaultHealth?) {
-        health[vault.id] = value
     }
 
     // MARK: Loading
@@ -310,5 +295,59 @@ final class ContextModel {
         let base = "https://portal.azure.com/"
         let tenantPart = tenant.map { "#@\($0)" } ?? "#"
         return URL(string: "\(base)\(tenantPart)/resource\(vault.id)/overview")
+    }
+}
+
+// MARK: - Favorites / health / in-place refresh
+
+extension ContextModel {
+    func isFavorite(_ vault: Vault) -> Bool {
+        favoriteIDs.contains { $0.lowercased() == vault.id.lowercased() }
+    }
+
+    func toggleFavorite(_ vault: Vault) {
+        if isFavorite(vault) {
+            favoriteIDs.removeAll { $0.lowercased() == vault.id.lowercased() }
+        } else {
+            favoriteIDs.append(vault.id)
+        }
+        state.favorites = favoriteIDs
+        persist()
+    }
+
+    func markVault(_ vault: Vault, _ value: VaultHealth?) {
+        health[vault.id] = value
+    }
+
+    /// Re-fetches the vault list in place: keeps `vaults` and the selection on screen while loading.
+    /// Falls back to a full `reload()` when tenants / subscriptions aren't loaded (e.g. they failed).
+    func refreshVaults() {
+        guard let client, let tenant = selectedTenantID, let sub = selectedSubscriptionID else { return reload() }
+        vaultTask?.cancel()
+        vaultsPhase = .loading
+        vaultsError = nil
+        vaultTask = Task { [weak self] in
+            do {
+                let result = try await client.vaults(subscriptionId: sub, tenant: tenant)
+                try Task.checkCancellation()
+                self?.vaultsRefreshed(result)
+            } catch is CancellationError {
+            } catch {
+                if !Task.isCancelled { self?.vaultsFailed(error) }
+            }
+        }
+    }
+
+    private func vaultsRefreshed(_ result: [Vault]) {
+        vaults = result
+        vaultsPhase = .idle
+        let current = selectedVaultID?.lowercased()
+        let kept = result.first { $0.id.lowercased() == current }?.id
+        if kept != selectedVaultID {
+            selectedVaultID = kept
+            state.vaultId = kept
+            persist()
+            contextGeneration += 1
+        }
     }
 }

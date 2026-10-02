@@ -1,3 +1,5 @@
+import AzureARM
+import AzureCore
 import Foundation
 import KeyVaultSecrets
 import Testing
@@ -59,5 +61,36 @@ import Testing
         #expect(m.visible.map(\.name) == ["c", "b", "a"])
         m.selection = ["a", "c"]
         #expect(m.selectedNames() == ["c", "a"])
+    }
+
+    @Test func cancelledLoadDoesNotCacheTruncatedList() async throws {
+        let vault = Vault(
+            id: "/subscriptions/s/resourceGroups/rg/providers/Microsoft.KeyVault/vaults/kv", name: "kv",
+            location: "westeurope", resourceGroup: "rg", subscriptionId: "s",
+            vaultUri: URL(string: "https://kv.vault.azure.net/")!, tenantId: "t")
+        let m = SecretsModel(clientFactory: { v in
+            let http = AzureHTTPClient(
+                tokenProvider: MockTokenProvider(), tenant: "t", resource: .vault,
+                transport: SlowTransport(inner: MockAzureTransport(secretCount: 100)))
+            return KeyVaultSecretsClient(vaultURI: v.vaultUri, http: http)
+        })
+        let first = Task { await m.load(vault: vault) }
+        while m.rows.isEmpty { try await Task.sleep(for: .milliseconds(5)) }
+        first.cancel()
+        await first.value
+        #expect(m.rows.count < 100)
+
+        await m.load(vault: vault)  // not forced: must not be served a truncated cache entry
+        #expect(m.rows.count == 100)
+        #expect(m.phase == .loaded)
+    }
+}
+
+/// Delays every response so a load can be cancelled between pages.
+private struct SlowTransport: HTTPTransport {
+    let inner: MockAzureTransport
+    func send(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
+        try? await Task.sleep(for: .milliseconds(50))
+        return try await inner.send(request)
     }
 }

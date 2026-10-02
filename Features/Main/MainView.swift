@@ -26,7 +26,6 @@ struct MainView: View {
         NavigationSplitView {
             VaultSidebar()
                 .focused($pane, equals: .sidebar)
-                .safeAreaInset(edge: .top) { if context.isProduction { ProdBadge().padding(.vertical, 4) } }
                 .navigationSplitViewColumnWidth(min: 200, ideal: 240, max: 360)
         } content: {
             Group {
@@ -49,7 +48,6 @@ struct MainView: View {
             SecretDetailView()
                 .focusable()
                 .focused($pane, equals: .detail)
-                .safeAreaInset(edge: .top) { if context.isProduction { ProdBadge().padding(.vertical, 4) } }
         }
         .tint(context.isProduction ? Color.red : nil)
         .toolbar {
@@ -135,7 +133,7 @@ struct MainView: View {
     }
 
     private func refreshAll() {
-        context.reload()
+        context.refreshVaults()
         Task { await secrets.refresh() }
         if context.showsDeletedSecrets { Task { await deleted.refresh() } }
     }
