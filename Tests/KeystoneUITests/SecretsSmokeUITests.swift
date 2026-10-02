@@ -176,6 +176,29 @@ final class SecretsSmokeUITests: XCTestCase {
         XCTAssertTrue(confirm.isEnabled)
     }
 
+    /// ⇧⌘F finds every secret holding the mock's shared value across the subscription and opens one.
+    @MainActor
+    func testSearchByValue() {
+        let app = launch([])
+        let vault = app.staticTexts["kv-dev"].firstMatch
+        XCTAssertTrue(vault.waitForExistence(timeout: timeout), "vault not listed")
+        vault.click()
+        XCTAssertTrue(app.staticTexts["db-password"].waitForExistence(timeout: timeout), "rows not loaded")
+
+        app.typeKey("f", modifierFlags: [.command, .shift])
+        let field = app.descendants(matching: .any)["valueSearch.value"].firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: timeout), "value search did not open")
+        field.click()
+        field.typeText("s3cr3t-shared-connection-string")
+        app.sheets.radioButtons["Subscription"].firstMatch.click()
+        app.typeKey(.return, modifierFlags: [])
+        let row = app.descendants(matching: .any)["valueSearch.row.kv-staging/svc-0005"].firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: timeout), "shared value not found in kv-staging")
+        XCTAssertTrue(app.descendants(matching: .any)["valueSearch.row.kv-dev/api-key"].exists)
+        row.click()
+        XCTAssertTrue(field.waitForNonExistence(timeout: timeout), "sheet did not close")
+    }
+
     /// `-UITestLock` keeps the lock screen up (authenticator never succeeds).
     @MainActor
     func testLockScreenShown() {

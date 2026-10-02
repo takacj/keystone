@@ -82,3 +82,13 @@ public struct AzureErrorBody: Sendable, Equatable, Decodable {
         try? JSONDecoder().decode(Envelope.self, from: data).error
     }
 }
+
+extension AzureErrorBody {
+    /// Key Vault answers 403 both for missing permissions and for requests rejected by its network rules.
+    public var isFirewallBlock: Bool {
+        let codes: Set<String> = ["ForbiddenByFirewall", "ForbiddenByConnection"]
+        if let innerCode, codes.contains(innerCode) { return true }
+        if let code, codes.contains(code) { return true }
+        return message?.contains("Client address is not authorized") == true
+    }
+}

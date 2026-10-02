@@ -96,12 +96,7 @@ struct ErrorPresentation: Equatable {
     }
 
     /// Key Vault answers 403 both for missing permissions and for requests rejected by its network rules.
-    static func isFirewallBlock(_ body: AzureErrorBody?) -> Bool {
-        let codes: Set<String> = ["ForbiddenByFirewall", "ForbiddenByConnection"]
-        if let inner = body?.innerCode, codes.contains(inner) { return true }
-        if let code = body?.code, codes.contains(code) { return true }
-        return body?.message?.contains("Client address is not authorized") == true
-    }
+    static func isFirewallBlock(_ body: AzureErrorBody?) -> Bool { body?.isFirewallBlock == true }
 
     /// The caller IP Key Vault reports in firewall rejections ("Client address: 1.2.3.4").
     static func clientAddress(in message: String?) -> String? {

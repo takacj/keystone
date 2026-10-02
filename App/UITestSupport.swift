@@ -15,6 +15,9 @@ enum UITestSupport {
         ["kv-dev", "kv-staging"] + (hasFlag("-UITestProd") ? [prodVaultName] : [])
     }
     static let secretValuePrefix = "s3cr3t-"
+    /// Current value shared by `sharedValueNames`, so "Search by value" has duplicates to find.
+    static let sharedValue = "s3cr3t-shared-connection-string"
+    static let sharedValueNames: Set<String> = ["api-key", "svc-0005", "svc-0010"]
 
     static func hasFlag(_ flag: String) -> Bool { ProcessInfo.processInfo.arguments.contains(flag) }
 
@@ -158,7 +161,9 @@ struct MockAzureTransport: HTTPTransport {
             return page
         case 2 where parts[0] == "secrets":
             var bundle = item(parts[1])
-            bundle["value"] = UITestSupport.secretValuePrefix + parts[1]
+            bundle["value"] =
+                UITestSupport.sharedValueNames.contains(parts[1])
+                ? UITestSupport.sharedValue : UITestSupport.secretValuePrefix + parts[1]
             bundle["id"] = "\(base)/secrets/\(parts[1])/v1"
             return bundle
         case 3 where parts[0] == "secrets" && parts[2] == "versions":

@@ -11,6 +11,8 @@ accounts, tenants, subscriptions and vaults.
 - Create secrets, set new values, edit metadata, and undo.
 - Version history with restore; soft delete, recover and purge.
 - ⌘K command palette that searches secret names across every vault in a tenant.
+- ⇧⌘F search by value: finds which secrets hold a given value in the current vault, subscription or tenant
+  (values are read and compared in memory, never stored).
 - Touch ID app lock, extra confirmation for production vaults, readable Azure error messages.
 
 ## How it works

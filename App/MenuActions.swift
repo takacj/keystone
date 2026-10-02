@@ -38,6 +38,7 @@ struct MenuActions {
     var refresh: () -> Void = {}
     var focusFilter: () -> Void = {}
     var palette: () -> Void = {}
+    var searchByValue: () -> Void = {}
     var focusPane: (Pane) -> Void = { _ in }
     var switcher: (QuickSwitchKind) -> Void = { _ in }
     var toggleDeleted: () -> Void = {}
@@ -77,6 +78,8 @@ struct KeystoneCommands: Commands {
         CommandMenu("Vault") {
             Button("Command Palette") { a.palette() }
                 .keyboardShortcut("k", modifiers: .command).disabled(!live)
+            Button("Search by Value…") { a.searchByValue() }
+                .keyboardShortcut("f", modifiers: [.command, .shift]).disabled(!live)
             Button("Refresh") { a.refresh() }
                 .keyboardShortcut("r", modifiers: .command).disabled(!live)
             Divider()

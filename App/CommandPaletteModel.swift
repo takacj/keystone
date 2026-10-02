@@ -82,7 +82,8 @@ final class CommandPaletteModel {
     private var refreshTask: Task<Void, Never>?
     private var toastTask: Task<Void, Never>?
     private var lister: NameIndex.SecretNameLister?
-    private var allVaults: [Vault] = []
+    /// Vaults of the tenant found by the last discovery.
+    private(set) var allVaults: [Vault] = []
     private var tenant: String?
     private let index: NameIndex
 

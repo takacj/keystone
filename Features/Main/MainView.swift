@@ -14,6 +14,7 @@ struct MainView: View {
     @State private var deleted = DeletedSecretsModel()
     @State private var detail = SecretDetailModel()
     @State private var palette = CommandPaletteModel()
+    @State private var valueSearch = ValueSearchModel()
     @AppStorage(CommandPaletteModel.defaultScopeKey) private var paletteDefaultScope =
         CommandPaletteModel.Scope.currentSubscription.storageValue
     @State private var editor = SecretEditorCoordinator()
@@ -67,6 +68,9 @@ struct MainView: View {
             QuickSwitchSheet(kind: kind, items: switchItems(kind)) { selectSwitch(kind, $0) }
         }
         .sheet(item: Bindable(editor).sheet) { SecretEditorSheet(model: $0) }
+        .sheet(isPresented: Binding(get: { valueSearch.isPresented }, set: { if !$0 { valueSearch.close() } })) {
+            ValueSearchSheet()
+        }
         .overlay(alignment: .bottom) { SecretEditorToast() }
         .alert(
             "Undo failed",
@@ -79,6 +83,7 @@ struct MainView: View {
         .onChange(of: lock.lockGeneration) {
             detail.clear()
             palette.reset()
+            valueSearch.lockChanged()
         }
         .onChange(of: context.contextGeneration) { detail.contextChanged() }
         .onChange(of: paletteDefaultScope) {
@@ -90,6 +95,7 @@ struct MainView: View {
             configureDeleted()
             configureEditor()
             configurePalette()
+            configureValueSearch()
         }
         .task(id: model.selectedAccountID) { switchAccount() }
         .sheet(isPresented: Bindable(model).isAddAccountPresented) { AddAccountSheet() }
@@ -101,6 +107,7 @@ struct MainView: View {
         .environment(detail)
         .environment(editor)
         .environment(palette)
+        .environment(valueSearch)
         .environment(requests)
     }
 
@@ -163,6 +170,10 @@ struct MainView: View {
         a.refresh = { refreshAll() }
         a.focusFilter = { [requests] in requests.requestFocusFilter() }
         a.palette = { [palette] in palette.toggle() }
+        a.searchByValue = { [valueSearch, palette] in
+            palette.close()
+            valueSearch.open()
+        }
         a.focusPane = { pane = $0 }
         a.switcher = { switcher = $0 }
         a.toggleDeleted = { [context] in context.showsDeletedSecrets.toggle() }
@@ -243,11 +254,41 @@ struct MainView: View {
 
     private func switchAccount() {
         palette.reset()
+        valueSearch.close()
         secrets.invalidateCache()
         let account = model.selectedAccount
         let client = account.flatMap { model.tokenProvider(for: $0) }.map {
             ARMClient(tokenProvider: $0, transport: model.transport)
         }
         context.switchAccount(account, client: client)
+    }
+}
+
+extension MainView {
+    private func configureValueSearch() {
+        valueSearch.currentVault = { [context] in context.selectedVault }
+        valueSearch.subscriptionVaults = { [context] in context.vaults }
+        valueSearch.tenantVaults = { [palette, context] in
+            if !palette.allVaults.isEmpty { return palette.allVaults }
+            guard let tenant = context.selectedTenantID else { return [] }
+            return try await palette.discover(tenant)
+        }
+        valueSearch.subscriptionName = { [context] id in
+            context.subscriptions.first { $0.subscriptionId.lowercased() == id.lowercased() }?.displayName
+        }
+        valueSearch.makeSearcher = { [model, context] in
+            guard let account = context.account, let provider = model.tokenProvider(for: account),
+                let tenant = context.selectedTenantID
+            else { return nil }
+            let transport = model.transport
+            return ValueSearchModel.liveSearcher(client: { vault in
+                let http = AzureHTTPClient(
+                    tokenProvider: provider, tenant: vault.tenantId ?? tenant, resource: .vault, transport: transport)
+                return KeyVaultSecretsClient(vaultURI: vault.vaultUri, http: http)
+            })
+        }
+        valueSearch.navigate = { [context, secrets] vault, name in
+            await PaletteNavigator.navigate(vault: vault, secret: name, context: context, secrets: secrets)
+        }
     }
 }

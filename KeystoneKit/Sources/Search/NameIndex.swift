@@ -6,8 +6,19 @@ import KeyVaultSecrets
 /// In-memory index of secret names per vault for the ⌘K palette. Never stores secret values.
 public actor NameIndex {
     public enum InaccessibleReason: Sendable, Equatable {
-        case unauthorized, forbidden, network
+        case unauthorized, forbidden, firewall, network
         case other(String)
+
+        /// Short explanation shown next to a skipped vault.
+        public var message: String {
+            switch self {
+            case .unauthorized: "Not signed in (401)"
+            case .forbidden: "No permission (403)"
+            case .firewall: "Blocked by vault firewall"
+            case .network: "Unreachable (firewall or private endpoint)"
+            case .other(let detail): "Error: \(detail)"
+            }
+        }
     }
 
     public enum VaultState: Sendable, Equatable {
@@ -175,7 +186,7 @@ public actor NameIndex {
         }
     }
 
-    private static func isTransient(_ error: Error) -> Bool {
+    static func isTransient(_ error: Error) -> Bool {
         guard let e = error as? AzureAPIError else { return false }
         switch e {
         case .throttled: return true
@@ -200,10 +211,10 @@ public actor NameIndex {
         }
     }
 
-    private static func reason(_ error: Error) -> InaccessibleReason {
+    static func reason(_ error: Error) -> InaccessibleReason {
         switch error as? AzureAPIError {
         case .unauthorized?: .unauthorized
-        case .forbidden?: .forbidden
+        case .forbidden(let body)?: body?.isFirewallBlock == true ? .firewall : .forbidden
         case .network?: .network
         case let e?: .other(String(describing: e.statusCode ?? 0))
         case nil: .other(error.localizedDescription)
