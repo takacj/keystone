@@ -9,6 +9,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - Search by value across Key Vaults (⇧⌘F), in the current vault, subscription or tenant.
 - Demo mock data (`-UITestDemo`) and README screenshots.
 - Contributor docs, issue/PR templates, CI, CodeQL and Dependabot.
+- Tag-triggered release workflow publishing the DMG, checksum and provenance attestation.
 
 ### Changed
 - Vault list keeps its position on refresh; sidebar respects the active filter.
