@@ -42,8 +42,13 @@ Thanks for your interest! Bug reports, ideas and pull requests are welcome.
   changes with gitleaks.
 
 ## Releases
-Maintainers use [semver](https://semver.org), tag releases as `vX.Y.Z`, and update
-[CHANGELOG.md](CHANGELOG.md).
+Maintainers use [semver](https://semver.org). To release:
+1. In a PR, bump `MARKETING_VERSION` in `project.yml` and move `Unreleased` entries in
+   [CHANGELOG.md](CHANGELOG.md) under a new `## [X.Y.Z] - YYYY-MM-DD` section (update the compare links).
+2. After merging, tag `main`: `git tag -a vX.Y.Z -m "vX.Y.Z" && git push origin vX.Y.Z`
+3. The `Release` workflow checks the tag matches the version, runs lint and tests, builds the DMG, and
+   publishes a GitHub Release with the DMG, its SHA-256 checksum, a provenance attestation, and the
+   changelog section as notes.
 
 ## Code of conduct
 This project follows the [Code of Conduct](CODE_OF_CONDUCT.md).

@@ -1,0 +1,77 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: macos-26
+    environment: release
+    permissions:
+      contents: write # create the GitHub Release
+      id-token: write # sign the provenance attestation
+      attestations: write
+    env:
+      TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Check tag matches MARKETING_VERSION
+        run: |
+          version=$(sed -n 's/^ *MARKETING_VERSION: *//p' project.yml)
+          if [ "v$version" != "$TAG" ]; then
+            echo "::error::Tag $TAG does not match MARKETING_VERSION $version in project.yml"
+            exit 1
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      - name: Extract release notes from CHANGELOG
+        run: |
+          awk -v v="$VERSION" '
+            index($0, "## [" v "]") == 1 { found = 1; next }
+            found && (/^## \[/ || /^\[[^]]+\]: /) { exit }
+            found { print }
+          ' CHANGELOG.md > "$RUNNER_TEMP/notes.md"
+          if ! grep -q '[^[:space:]]' "$RUNNER_TEMP/notes.md"; then
+            echo "::error::No CHANGELOG.md section for [$VERSION]"
+            exit 1
+          fi
+
+      - run: brew install xcodegen swiftlint swift-format
+      - run: make lint
+      - run: make test
+
+      # TODO(signing): once a Developer ID certificate exists, add steps here that
+      # 1. import the .p12 from secrets (MACOS_CERT_P12, MACOS_CERT_PASSWORD) into a temporary keychain,
+      # 2. build with CODE_SIGN_IDENTITY="Developer ID Application" and ENABLE_HARDENED_RUNTIME=YES.
+      # Store the secrets in the protected `release` environment, not as repo secrets.
+      - run: make dmg
+
+      # TODO(notarization): after signing, add
+      #   xcrun notarytool submit "build/Keystone-$VERSION.dmg" --apple-id ... --team-id ... --password ... --wait
+      #   xcrun stapler staple "build/Keystone-$VERSION.dmg"
+      # using secrets APPLE_ID, APPLE_TEAM_ID, APPLE_APP_PASSWORD (or an App Store Connect API key).
+
+      - name: Checksum
+        working-directory: build
+        run: shasum -a 256 "Keystone-$VERSION.dmg" > "Keystone-$VERSION.dmg.sha256"
+
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: build/Keystone-${{ env.VERSION }}.dmg
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$TAG" \
+            "build/Keystone-$VERSION.dmg" "build/Keystone-$VERSION.dmg.sha256" \
+            --title "Keystone $VERSION" --notes-file "$RUNNER_TEMP/notes.md" --verify-tag

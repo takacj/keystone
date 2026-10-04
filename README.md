@@ -87,7 +87,9 @@ without opening the Azure portal.
 - To build: Xcode 26, `brew install xcodegen swiftlint swift-format`
 
 ## Install
-- `make dmg` builds `build/Keystone-<version>.dmg` (Release, universal, ad-hoc signed, not notarized).
+- Download the DMG from [Releases](https://github.com/takacj/keystone/releases), or build it yourself:
+  `make dmg` builds `build/Keystone-<version>.dmg` (Release, universal, ad-hoc signed, not notarized).
+- Optional: verify the download with `gh attestation verify Keystone-<version>.dmg --repo takacj/keystone`.
 - Open the DMG and drag **Keystone** to **Applications**.
 - The app isn't notarized, so macOS blocks the first launch on other Macs: open System Settings →
   Privacy & Security → **Open Anyway**, or run `xattr -dr com.apple.quarantine /Applications/Keystone.app`.
