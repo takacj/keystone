@@ -4,3 +4,8 @@ DerivedData/
 *.xcodeproj
 .swiftpm/
 .DS_Store
+xcuserdata/
+*.xcuserstate
+.env
+.env.*
+*.dmg

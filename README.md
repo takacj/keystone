@@ -10,6 +10,7 @@ without opening the Azure portal.
 ![macOS 26](https://img.shields.io/badge/macOS-26-black?logo=apple)
 ![Swift 6](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)
 ![SwiftUI](https://img.shields.io/badge/UI-SwiftUI-0A84FF)
+[![CI](https://github.com/takacj/keystone/actions/workflows/ci.yml/badge.svg)](https://github.com/takacj/keystone/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ![Keystone main window: vault sidebar, secrets table and secret detail with a revealed value](docs/screenshots/main.png)
@@ -86,7 +87,9 @@ without opening the Azure portal.
 - To build: Xcode 26, `brew install xcodegen swiftlint swift-format`
 
 ## Install
-- `make dmg` builds `build/Keystone-<version>.dmg` (Release, universal, ad-hoc signed, not notarized).
+- Download the DMG from [Releases](https://github.com/takacj/keystone/releases), or build it yourself:
+  `make dmg` builds `build/Keystone-<version>.dmg` (Release, universal, ad-hoc signed, not notarized).
+- Optional: verify the download with `gh attestation verify Keystone-<version>.dmg --repo takacj/keystone`.
 - Open the DMG and drag **Keystone** to **Applications**.
 - The app isn't notarized, so macOS blocks the first launch on other Macs: open System Settings →
   Privacy & Security → **Open Anyway**, or run `xattr -dr com.apple.quarantine /Applications/Keystone.app`.
@@ -127,6 +130,11 @@ make test-integration
   search and persistence.
 - `Tests/`: app unit tests and UI tests.
 - `docs/screenshots/`: README images, captured from the `-UITestDemo` mock environment.
+
+## Contributing
+- See [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md).
+- Report security issues privately: [SECURITY.md](SECURITY.md).
+- Release notes: [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 MIT. See [LICENSE](LICENSE).
