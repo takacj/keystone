@@ -10,6 +10,7 @@ without opening the Azure portal.
 ![macOS 26](https://img.shields.io/badge/macOS-26-black?logo=apple)
 ![Swift 6](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)
 ![SwiftUI](https://img.shields.io/badge/UI-SwiftUI-0A84FF)
+[![CI](https://github.com/takacj/keystone/actions/workflows/ci.yml/badge.svg)](https://github.com/takacj/keystone/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ![Keystone main window: vault sidebar, secrets table and secret detail with a revealed value](docs/screenshots/main.png)
@@ -127,6 +128,11 @@ make test-integration
   search and persistence.
 - `Tests/`: app unit tests and UI tests.
 - `docs/screenshots/`: README images, captured from the `-UITestDemo` mock environment.
+
+## Contributing
+- See [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md).
+- Report security issues privately: [SECURITY.md](SECURITY.md).
+- Release notes: [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 MIT. See [LICENSE](LICENSE).
