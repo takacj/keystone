@@ -5,6 +5,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
+
+## [1.1.0] - 2026-10-05
 ### Added
 - Search by value across Key Vaults (⇧⌘F), in the current vault, subscription or tenant.
 - Demo mock data (`-UITestDemo`) and README screenshots.
@@ -22,5 +24,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - First public release: native macOS app for browsing, searching and editing Azure Key Vault secrets
   across accounts, tenants and subscriptions.
 
-[Unreleased]: https://github.com/takacj/keystone/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/takacj/keystone/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/takacj/keystone/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/takacj/keystone/releases/tag/v1.0.0
