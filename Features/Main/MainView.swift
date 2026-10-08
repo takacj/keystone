@@ -48,6 +48,7 @@ struct MainView: View {
         } detail: {
             SecretDetailView()
                 .focusable()
+                .focusEffectDisabled()
                 .focused($pane, equals: .detail)
         }
         .tint(context.isProduction ? Color.red : nil)
