@@ -6,6 +6,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-10-19
+### Fixed
+- Touch ID prompt popping up over other apps after an idle lock while Keystone is in the background;
+  it now waits until Keystone is active again.
+
 ## [1.1.1] - 2026-10-08
 ### Fixed
 - Stray blue focus ring along the detail pane edge after clicking it.
@@ -28,7 +33,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - First public release: native macOS app for browsing, searching and editing Azure Key Vault secrets
   across accounts, tenants and subscriptions.
 
-[Unreleased]: https://github.com/takacj/keystone/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/takacj/keystone/compare/v1.1.2...HEAD
+[1.1.2]: https://github.com/takacj/keystone/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/takacj/keystone/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/takacj/keystone/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/takacj/keystone/releases/tag/v1.0.0
