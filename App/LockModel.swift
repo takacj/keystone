@@ -59,6 +59,7 @@ final class LockModel {
     @ObservationIgnored private let defaults: UserDefaults
     @ObservationIgnored private let now: () -> Date
     @ObservationIgnored private let clearCache: () -> Void
+    @ObservationIgnored private let isAppActive: () -> Bool
     @ObservationIgnored private var lastActivity: Date
     @ObservationIgnored private var timer: Timer?
     @ObservationIgnored private var observers: [NSObjectProtocol] = []
@@ -75,13 +76,15 @@ final class LockModel {
         authenticator: any Authenticating = LocalAuthenticator(),
         defaults: UserDefaults = .standard,
         now: @escaping () -> Date = Date.init,
-        clearCache: @escaping () -> Void = { SecretValueCache.shared.clear() }
+        clearCache: @escaping () -> Void = { SecretValueCache.shared.clear() },
+        isAppActive: @escaping () -> Bool = { NSApp?.isActive ?? false }
     ) {
         self.isEnabled = enabled
         self.authenticator = authenticator
         self.defaults = defaults
         self.now = now
         self.clearCache = clearCache
+        self.isAppActive = isAppActive
         self.lastActivity = now()
         self.isLocked = enabled
     }
@@ -109,6 +112,13 @@ final class LockModel {
             isLocked = false
             lastActivity = now()
         }
+    }
+
+    /// Prompts only while the app is frontmost, so a background lock never pops Touch ID over other apps;
+    /// otherwise the prompt waits for `didBecomeActiveNotification`.
+    func unlockIfActive() async {
+        guard isAppActive() else { return }
+        await unlock()
     }
 
     // MARK: Idle
@@ -143,6 +153,15 @@ final class LockModel {
             dist.addObserver(
                 forName: .init("com.apple.screenIsLocked"), object: nil, queue: .main
             ) { [weak self] _ in MainActor.assumeIsolated { self?.lock() } })
+        observers.append(
+            NotificationCenter.default.addObserver(
+                forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main
+            ) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self, self.isLocked else { return }
+                    Task { await self.unlock() }
+                }
+            })
         eventMonitor = NSEvent.addLocalMonitorForEvents(
             matching: [.keyDown, .leftMouseDown, .rightMouseDown, .mouseMoved, .scrollWheel]
         ) { [weak self] event in
