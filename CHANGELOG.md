@@ -10,6 +10,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Fixed
 - Touch ID prompt popping up over other apps after an idle lock while Keystone is in the background;
   it now waits until Keystone is active again.
+- Azure CLI error output occasionally lost when `az` exited, showing a generic error instead of the real one
+  (e.g. MFA required).
 
 ## [1.1.1] - 2026-10-08
 ### Fixed

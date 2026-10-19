@@ -126,6 +126,9 @@ final class ProcessJob: @unchecked Sendable {
     private var reason: Reason?
     private var started = false
     private var pending = [Data(), Data()]  // partial lines: [stdout, stderr]
+    private var finish: CheckedContinuation<Int32, Error>?
+    private var remaining = 3  // process exit + EOF on stdout + EOF on stderr
+    private var exitCode: Int32 = 0
     /// Called (off the main thread) for each complete stdout/stderr line while the process runs.
     var onLine: (@Sendable (String) -> Void)?
 
@@ -153,21 +156,21 @@ final class ProcessJob: @unchecked Sendable {
     }
 
     func run() async throws -> CLIResult {
-        outPipe.fileHandleForReading.readabilityHandler = { [weak self] h in
-            let d = h.availableData
-            self?.append(d, toErr: false)
-        }
-        errPipe.fileHandleForReading.readabilityHandler = { [weak self] h in
-            let d = h.availableData
-            self?.append(d, toErr: true)
-        }
         let code: Int32 = try await withCheckedThrowingContinuation { cont in
-            process.terminationHandler = { p in cont.resume(returning: p.terminationStatus) }
+            lock.withLock { finish = cont }
+            // Finish only after exit *and* EOF on both pipes, so no output is lost to a late handler call.
+            outPipe.fileHandleForReading.readabilityHandler = { [weak self] h in
+                self?.consume(h, toErr: false)
+            }
+            errPipe.fileHandleForReading.readabilityHandler = { [weak self] h in
+                self?.consume(h, toErr: true)
+            }
+            process.terminationHandler = { [weak self] p in self?.markDone(exitCode: p.terminationStatus) }
             do {
                 lock.lock()
                 if reason != nil {  // cancelled/timed out before launch
                     lock.unlock()
-                    cont.resume(throwing: AzureCLIError.cancelled)
+                    fail(AzureCLIError.cancelled)
                     return
                 }
                 try process.run()
@@ -179,24 +182,45 @@ final class ProcessJob: @unchecked Sendable {
                 let notFound =
                     ns.domain == NSCocoaErrorDomain
                     && (ns.code == NSFileNoSuchFileError || ns.code == NSFileReadNoSuchFileError)
-                cont.resume(
-                    throwing: notFound ? AzureCLIError.notFound : AzureCLIError.launchFailed(error.localizedDescription)
-                )
+                fail(notFound ? AzureCLIError.notFound : AzureCLIError.launchFailed(error.localizedDescription))
             }
         }
-        // Drain remaining output.
-        outPipe.fileHandleForReading.readabilityHandler = nil
-        errPipe.fileHandleForReading.readabilityHandler = nil
-        flushLines(final: false)
-        let restOut = (try? outPipe.fileHandleForReading.readToEnd()) ?? nil
-        let restErr = (try? errPipe.fileHandleForReading.readToEnd()) ?? nil
-        let (o, e): (Data, Data) = lock.withLock {
-            if let restOut { out.append(restOut) }
-            if let restErr { err.append(restErr) }
-            return (out, err)
-        }
+        flushLines()
+        let (o, e) = lock.withLock { (out, err) }
         return CLIResult(
             exitCode: code, stdout: String(decoding: o, as: UTF8.self), stderr: String(decoding: e, as: UTF8.self))
+    }
+
+    private func consume(_ h: FileHandle, toErr: Bool) {
+        let d = h.availableData
+        if d.isEmpty {  // EOF
+            h.readabilityHandler = nil
+            markDone(exitCode: nil)
+        } else {
+            append(d, toErr: toErr)
+        }
+    }
+
+    /// Counts down exit + two EOFs; resumes `run` when all have happened.
+    private func markDone(exitCode: Int32?) {
+        lock.lock()
+        if let exitCode { self.exitCode = exitCode }
+        remaining -= 1
+        let cont = remaining == 0 ? finish : nil
+        if cont != nil { finish = nil }
+        let code = self.exitCode
+        lock.unlock()
+        cont?.resume(returning: code)
+    }
+
+    private func fail(_ error: Error) {
+        outPipe.fileHandleForReading.readabilityHandler = nil
+        errPipe.fileHandleForReading.readabilityHandler = nil
+        let cont = lock.withLock {
+            defer { finish = nil }
+            return finish
+        }
+        cont?.resume(throwing: error)
     }
 
     private func append(_ d: Data, toErr: Bool) {
@@ -220,7 +244,7 @@ final class ProcessJob: @unchecked Sendable {
         for l in lines { onLine?(l) }
     }
 
-    private func flushLines(final: Bool) {
+    private func flushLines() {
         guard let onLine else { return }
         lock.lock()
         let rest = pending.map { String(decoding: $0, as: UTF8.self) }
