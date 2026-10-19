@@ -16,7 +16,7 @@ struct LockOverlay: View {
             }
         }
         .ignoresSafeArea()
-        .task { await lock.unlock() }
+        .task { await lock.unlockIfActive() }
     }
 }
 

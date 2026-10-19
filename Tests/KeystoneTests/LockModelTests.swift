@@ -11,12 +11,13 @@ private struct FakeAuth: Authenticating {
 @MainActor
 struct LockModelTests {
     private func make(
-        enabled: Bool = true, succeeds: Bool = true, clock: Clock = Clock(), cleared: Counter = Counter()
+        enabled: Bool = true, succeeds: Bool = true, clock: Clock = Clock(), cleared: Counter = Counter(),
+        active: Bool = true
     ) -> LockModel {
         let defaults = UserDefaults(suiteName: UUID().uuidString)!
         return LockModel(
             enabled: enabled, authenticator: FakeAuth(result: succeeds), defaults: defaults,
-            now: { clock.date }, clearCache: { cleared.count += 1 })
+            now: { clock.date }, clearCache: { cleared.count += 1 }, isAppActive: { active })
     }
 
     final class Clock { var date = Date(timeIntervalSince1970: 0) }
@@ -73,6 +74,18 @@ struct LockModelTests {
         model.noteActivity()
         clock.date = Date(timeIntervalSince1970: 15 * 60)
         model.checkIdle()
+        #expect(!model.isLocked)
+    }
+
+    @Test func unlockIfActiveSkipsPromptInBackground() async {
+        let model = make(active: false)
+        await model.unlockIfActive()
+        #expect(model.isLocked)
+    }
+
+    @Test func unlockIfActivePromptsWhenFrontmost() async {
+        let model = make()
+        await model.unlockIfActive()
         #expect(!model.isLocked)
     }
 }
