@@ -48,9 +48,12 @@ import Testing
     @Test func cachedTokenUnder1ms() async throws {
         let provider = AzureCLITokenProvider(runner: FastRunner(), profileDir: URL(fileURLWithPath: "/tmp/profile"))
         _ = try await provider.token(tenant: "t", resource: .vault)  // cold: fills the cache
+        // Best of several samples: a single sample is at the mercy of scheduler noise on shared CI runners.
         let clock = ContinuousClock()
-        let elapsed = try await clock.measure {
-            _ = try await provider.token(tenant: "t", resource: .vault)
+        var elapsed = Duration.seconds(1)
+        for _ in 0..<20 {
+            elapsed = min(
+                elapsed, try await clock.measure { _ = try await provider.token(tenant: "t", resource: .vault) })
         }
         #expect(elapsed < .milliseconds(1), "cached token took \(elapsed)")
     }
